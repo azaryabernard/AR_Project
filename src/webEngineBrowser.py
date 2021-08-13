@@ -45,6 +45,8 @@ class Browser(QWidget):
 
         #QUICK ACCESS TOOLBAR
         self.quickAccessLayout = QHBoxLayout()
+        self.quickAccessLayout.setContentsMargins(1,1,1,1)
+        self.quickAccessLayout.setSpacing(5)
         self.fav_buttons = [QPushButton(s, self) for s in ["Google", "YouTube", "GMail", "Twitter", "Instagram", "reddit"]]
         [btn.clicked.connect(lambda state, x="www."+ btn.text() +".com": self.browse(fav=x)) for btn in self.fav_buttons]
         [self.quickAccessLayout.addWidget(btn) for btn in self.fav_buttons]
@@ -52,8 +54,8 @@ class Browser(QWidget):
 
         #Add everything to one layout
         self.vertLayout = QVBoxLayout(self.frame)
-        self.vertLayout.setContentsMargins(0,0,0,0)
-        self.vertLayout.setSpacing(0)
+        self.vertLayout.setContentsMargins(1,1,1,1)
+        self.vertLayout.setSpacing(1)
         self.vertLayout.addLayout(self.horizontalLayout)
         self.vertLayout.addWidget(self.web)
         self.vertLayout.addLayout(self.quickAccessLayout)
