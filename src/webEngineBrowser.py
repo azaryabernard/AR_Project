@@ -45,7 +45,7 @@ class Browser(QWidget):
 
         #QUICK ACCESS TOOLBAR
         self.quickAccessLayout = QHBoxLayout()
-        self.fav_buttons = [QPushButton(s, self) for s in ["Google", "YouTube", "GMail", "Twitter", "Instagram"]]
+        self.fav_buttons = [QPushButton(s, self) for s in ["Google", "YouTube", "GMail", "Twitter", "Instagram", "reddit"]]
         [btn.clicked.connect(lambda state, x="www."+ btn.text() +".com": self.browse(fav=x)) for btn in self.fav_buttons]
         [self.quickAccessLayout.addWidget(btn) for btn in self.fav_buttons]
         [btn.setStyleSheet(cs.small_icon_style) for btn in self.fav_buttons]
