@@ -64,8 +64,8 @@ small_icon_style = dedent(
             border-width: 1px; 
             border-radius: 5px;  
             border-color: grey;
-            font: 18px; 
-            padding: 2px; 
+            font: 18px bold; 
+            padding: 1px; 
         }  
         QPushButton:hover { 
             background-color: """+ cpalette["orange"][1] +""";  
@@ -92,7 +92,28 @@ webBrowser_style = dedent(
     background-color:white; 
     border-style: outset; 
     border-width: 2px; 
-    border-radius: 10px; 
+    border-bottom-right-radius: 10px; 
+    border-bottom-left-radius: 10px; 
     padding: 4px
     """
 )
+
+no_border_icon_style = dedent(
+    """QPushButton { 
+            background-color: white;
+            border-style: outset; 
+            border-width: 0px; 
+            border-radius: 0px;  
+            border-color: none;
+            font: 24px bold; 
+            padding: 0px; 
+            min-width:35px;
+            max-width:35px;
+        }  
+        QPushButton:hover { 
+            background-color: """+ cpalette["orange"][1] +""";  
+        } 
+        QPushButton:pressed {
+            background-color: """+ cpalette["orange"][2] +"""; 
+            border-style: inset; 
+        }""")

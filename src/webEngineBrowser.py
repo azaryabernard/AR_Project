@@ -2,10 +2,75 @@ import customStyleSheet as cs
 from urllib.parse import urlparse
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLineEdit, QPushButton, QTabWidget, QVBoxLayout, QWidget
  
-class Browser(QWidget):
-    def __init__(self, size=[800,800], default_url='https://www.google.com'):
+
+class Browser(QTabWidget):
+    """Tab Widget that that can have new tabs easily added to it."""
+
+    def __init__(self, size=[835,895]):
+        # Inits and Setup
+        super().__init__()
+        self.tabNumber = 0
+        self.resize(10,10)
+
+        # Corner Widget storing AddTab, minimized browser, close browser
+        cornerWidget = QWidget(self)
+        toolBar = QHBoxLayout(cornerWidget)
+        # Buttons in the corner
+        plus_button = QPushButton(' + ', self)
+        min_button = QPushButton('—', self)
+        close_button = QPushButton(' x ', self)
+        # Add widgets
+        toolBar.addWidget(plus_button)
+        toolBar.addWidget(min_button)
+        toolBar.addWidget(close_button)
+        self.setCornerWidget(cornerWidget)
+
+        # Stylesheet
+        self.setStyleSheet("border-width: 0px;")
+        self.tabBar().setStyleSheet("background-color: white;")
+        self.cornerWidget().setStyleSheet("background-color: white; border-width: 0px; spacing: 0; border-top-left-radius:10px; border-top-right-radius:10px; margin-right:11px;")
+        toolBar.setContentsMargins(10,0,10,0)
+        toolBar.setSpacing(0)
+        [x.setStyleSheet(cs.no_border_icon_style) for x in [plus_button, min_button, close_button]]
+       
+        #DefaultHomePage
+        self.addNewTab()
+
+        # Properties
+        self.setMovable(True)
+        self.setTabsClosable(True)
+
+        # Signals
+        self.tabCloseRequested.connect(self.removeTab)
+        plus_button.clicked.connect(self.addNewTab)
+        min_button.clicked.connect(lambda x: self.setVisible(x), False)
+        close_button.clicked.connect(self.webclose)
+        
+    # end Constructor
+
+    def addNewTab(self):
+        self.webPage = WebPage()
+        self.addTab(self.webPage, "")
+        self.webPage.web.urlChanged.connect(lambda state, x=self.tabNumber: self.url_change(x, state))
+        self.tabNumber = self.tabNumber + 1
+
+    
+    def url_change(self, index, url):
+        fullUrl = url.toString()
+        self.setTabText(index,fullUrl.split('.')[1])
+        self.webPage.url_line.setText(fullUrl)
+
+    
+    def webclose(self):
+        self.setEnabled(False)
+        self.close()
+# end class CustomTabWidget
+
+
+class WebPage(QWidget):
+    def __init__(self, size=[835,895], default_url='https://www.google.com'):
         #init and frame setup
         super().__init__()
         self.frame = QFrame(self)
@@ -22,26 +87,19 @@ class Browser(QWidget):
         self.url_line = QLineEdit(self.frame)
         self.back_button = QPushButton('<<', self.frame)
         self.forward_button = QPushButton('>>', self.frame)
-        self.min_button = QPushButton('—', self.frame)
-        self.close_button = QPushButton('X', self.frame)
-        [x.setStyleSheet(cs.small_icon_style) for x in [self.back_button, self.forward_button, self.min_button, self.close_button]]
+        [x.setStyleSheet(cs.small_icon_style) for x in [self.back_button, self.forward_button]]
         self.url_line.setStyleSheet(cs.small_line_style)
         
         #Connect toolbar items
         self.back_button.clicked.connect(self.web.back)
         self.forward_button.clicked.connect(self.web.forward)
-        self.min_button.clicked.connect(lambda x: self.setVisible(x), False)
-        self.close_button.clicked.connect(self.webclose)
         self.url_line.returnPressed.connect(self.browse)
         self.url_line.setText(default_url)
-        self.web.urlChanged.connect(lambda url: self.url_line.setText(url.toString()))
 
         #Add toolbars item to hlayout
         self.horizontalLayout.addWidget(self.back_button, 1)
         self.horizontalLayout.addWidget(self.forward_button, 1)
         self.horizontalLayout.addWidget(self.url_line, 8)
-        self.horizontalLayout.addWidget(self.min_button, 1)
-        self.horizontalLayout.addWidget(self.close_button, 1)
 
         #QUICK ACCESS TOOLBAR
         self.quickAccessLayout = QHBoxLayout()
@@ -79,7 +137,3 @@ class Browser(QWidget):
                 self.web.load(QUrl(parsedUrl))
 
     #close and set enabled to false (for if in main)
-    def webclose(self):
-        self.web.close()
-        self.setEnabled(False)
-        self.close()
