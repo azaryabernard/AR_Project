@@ -30,14 +30,15 @@ class VideoThread(QThread):
         handsModule = mediapipe.solutions.hands
 
         cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.7, max_num_hands=2) as hands:
 
             while self._run_flag:
                 ret, frame = cap.read()
                 flipped = cv2.flip(frame, flipCode = -1)
-                frame1 = cv2.resize(flipped, (640, 480))
-                results = hands.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+                results = hands.process(cv2.cvtColor(flipped, cv2.COLOR_BGR2RGB))
                    
                 blank_image = np.zeros(shape=[480, 640, 3], dtype=np.uint8)
                    
@@ -63,7 +64,7 @@ class MainWindow(QWidget):
         self.setWindowTitle('AR Prototype 0.1')
         self.resize(W_WIDTH,W_HEIGHT)
         self.setStyleSheet(cs.mainwindow_style);
-        #self.initVideo()
+        self.initVideo()
         self.initUI()
         
         
@@ -175,9 +176,11 @@ class MainWindow(QWidget):
         # start the thread
         self.thread.start()
     
+    
     def closeEvent(self, event):
         self.thread.stop()
         event.accept()
+        
         
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
@@ -187,10 +190,9 @@ class MainWindow(QWidget):
     
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
+        h, w, ch = cv_img.shape
         bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        convert_to_Qt_format = QtGui.QImage(cv_img.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     #END FOR VIDEO
