@@ -1,5 +1,5 @@
 import mediapipe
- 
+import numpy as np
 import cv2
 
 
@@ -15,11 +15,14 @@ with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.7, mi
            flipped = cv2.flip(frame, flipCode = -1)
            frame1 = cv2.resize(flipped, (640, 480))
            results = hands.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+           
+           blank_image = np.zeros(shape=[480, 640, 3], dtype=np.uint8)
+           
            if results.multi_hand_landmarks != None:
               for handLandmarks in results.multi_hand_landmarks:
-                  drawingModule.draw_landmarks(frame1, handLandmarks, handsModule.HAND_CONNECTIONS)
+                  drawingModule.draw_landmarks(blank_image, handLandmarks, handsModule.HAND_CONNECTIONS)
   
-           cv2.imshow("Frame", frame1);
+           cv2.imshow("Frame", blank_image);
            key = cv2.waitKey(1) & 0xFF
-           if key == ord("q"):
+           if key == ord("q") or cv2.getWindowProperty("Frame", 1) < 1:
               break

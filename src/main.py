@@ -1,26 +1,72 @@
 import sys
+import cv2
+import mediapipe
 from time import sleep
 import sh
 import customStyleSheet as cs
 import webEngineBrowser as wb
 import embed_terminal_1 as et
 from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QLabel, QGridLayout
-from PyQt5.QtCore import QTimer, QTime, Qt, QSize
+from PyQt5.QtCore import QTimer, QTime, Qt, QSize, pyqtSignal, pyqtSlot, QThread
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon, QWindow
+from PyQt5 import QtGui
+from PyQt5.QtGui import QIcon, QWindow, QPixmap
+import numpy as np
 
 W_WIDTH = 2560
 W_HEIGHT = 1440
 
+
+#EXPERIMENTAL VIDEO
+class VideoThread(QThread):
+    change_pixmap_signal = pyqtSignal(np.ndarray)
+
+    def __init__(self):
+        super().__init__()
+        self._run_flag = True
+
+    def run(self):
+        drawingModule = mediapipe.solutions.drawing_utils
+        handsModule = mediapipe.solutions.hands
+
+        cap = cv2.VideoCapture(0)
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.7, max_num_hands=2) as hands:
+
+            while self._run_flag:
+                ret, frame = cap.read()
+                flipped = cv2.flip(frame, flipCode = -1)
+                frame1 = cv2.resize(flipped, (640, 480))
+                results = hands.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+                   
+                blank_image = np.zeros(shape=[480, 640, 3], dtype=np.uint8)
+                   
+                if results.multi_hand_landmarks != None:
+                    for handLandmarks in results.multi_hand_landmarks:
+                        drawingModule.draw_landmarks(blank_image, handLandmarks, handsModule.HAND_CONNECTIONS)
+          
+                if ret:
+                    self.change_pixmap_signal.emit(blank_image)
+                    
+        
+    def stop(self):
+        """Sets run flag to False and waits for thread to finish"""
+        self._run_flag = False
+        self.wait()
+
+#END EXPERIMENTAL
+        
+        
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('AR Prototype 0.1')
         self.resize(W_WIDTH,W_HEIGHT)
         self.setStyleSheet(cs.mainwindow_style);
+        #self.initVideo()
         self.initUI()
-
-
+        
+        
     def initUI(self):
         self.init_buttons()
         self.init_labels()
@@ -111,6 +157,43 @@ class MainWindow(QWidget):
         self.testWidgetFromWindow.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.testWidgetFromWindow.setStyleSheet("background-color: white;")
         self.layout().addWidget(self.testWidgetFromWindow)
+    
+    
+    #FOR VIDEO
+    def initVideo(self):
+        self.display_width = 640
+        self.display_height = 480
+        
+        self.image_label = QLabel(self)
+        self.image_label.resize(self.display_width, self.display_height)
+        self.image_label.move((W_WIDTH-self.display_width)/2, (W_HEIGHT-self.display_height)/2)
+        
+         # create the video capture thread
+        self.thread = VideoThread()
+        # connect its signal to the update_image slot
+        self.thread.change_pixmap_signal.connect(self.update_image)
+        # start the thread
+        self.thread.start()
+    
+    def closeEvent(self, event):
+        self.thread.stop()
+        event.accept()
+        
+    @pyqtSlot(np.ndarray)
+    def update_image(self, cv_img):
+        """Updates the image_label with a new opencv image"""
+        qt_img = self.convert_cv_qt(cv_img)
+        self.image_label.setPixmap(qt_img)
+    
+    def convert_cv_qt(self, cv_img):
+        """Convert from an opencv image to QPixmap"""
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+        return QPixmap.fromImage(p)
+    #END FOR VIDEO
 
 
 def main(): 
