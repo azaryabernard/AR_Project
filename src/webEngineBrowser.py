@@ -1,6 +1,6 @@
 import customStyleSheet as cs
 from urllib.parse import urlparse
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLineEdit, QPushButton, QTabWidget, QVBoxLayout, QWidget
  
@@ -12,6 +12,7 @@ class Browser(QTabWidget):
         # Inits and Setup
         super().__init__()
         self.tabNumber = 0
+        self.webPages = []
         self.resize(10,10)
 
         # Corner Widget storing AddTab, minimized browser, close browser
@@ -34,36 +35,64 @@ class Browser(QTabWidget):
         toolBar.setContentsMargins(10,0,10,0)
         toolBar.setSpacing(0)
         [x.setStyleSheet(cs.no_border_icon_style) for x in [plus_button, min_button, close_button]]
-       
-        #DefaultHomePage
-        self.addNewTab()
 
         # Properties
         self.setMovable(True)
         self.setTabsClosable(True)
 
         # Signals
-        self.tabCloseRequested.connect(self.removeTab)
+        self.tabCloseRequested.connect(self.removeTabSelf)
         plus_button.clicked.connect(self.addNewTab)
         min_button.clicked.connect(lambda x: self.setVisible(x), False)
         close_button.clicked.connect(self.webclose)
-        
+               
+        #DefaultHomePage
+        self.addNewTab()
     # end Constructor
 
+    def removeTabSelf(self, index):
+        #print("INDEX: {}".format(index))
+        self.webPages[index].web.close()
+        self.removeTab(index)
+        self.webPages.pop(index)
+        newInd = 0
+        for wp in self.webPages:
+            wp.web.urlChanged.disconnect()
+            wp.web.urlChanged.connect(lambda state, x=newInd: self.url_change(x, state))
+            newInd = newInd + 1
+        
+        self.tabNumber = self.tabNumber - 1
+        if self.tabNumber == 0:
+            self.webclose()
+
     def addNewTab(self):
-        self.webPage = WebPage()
-        self.addTab(self.webPage, "")
-        self.webPage.web.urlChanged.connect(lambda state, x=self.tabNumber: self.url_change(x, state))
+        webPage = WebPage()
+        self.webPages.append(webPage)
+        self.addTab(webPage, "https://www.google.com/")        
+        index = self.tabNumber
+        self.setTabText(index, "google")
+        webPage.web.urlChanged.connect(lambda state, x=index: self.url_change(x, state))
         self.tabNumber = self.tabNumber + 1
 
     
     def url_change(self, index, url):
-        fullUrl = url.toString()
-        self.setTabText(index,fullUrl.split('.')[1])
-        self.webPage.url_line.setText(fullUrl)
+        splitUrl = url.toString().split('.')
+        usedUrl = "Unknown"
+        
+        if len(splitUrl) == 2:
+            usedUrl = splitUrl[0].split('//')[1]
+        elif len(splitUrl) == 3:
+            usedUrl = splitUrl[1]
+            
+        self.setTabText(index, usedUrl)
+        self.webPages[index].url_line.setText(url.toString())
 
     
     def webclose(self):
+        for tb_ind in range(self.tabNumber):
+            self.webPages[tb_ind].web.close()
+            self.webPages[tb_ind].close()
+            
         self.setEnabled(False)
         self.close()
 # end class CustomTabWidget
@@ -117,6 +146,7 @@ class WebPage(QWidget):
         self.vertLayout.addLayout(self.horizontalLayout)
         self.vertLayout.addWidget(self.web)
         self.vertLayout.addLayout(self.quickAccessLayout)
+        self.web.setAttribute(Qt.WA_DeleteOnClose)
 
     #browse the given url both from url_line in toolbar and from QuickAccess Toolbar
     def browse(self, fav=''):
