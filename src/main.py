@@ -44,6 +44,7 @@ class VideoThread(QThread):
                    
                 if results.multi_hand_landmarks != None:
                     for handLandmarks in results.multi_hand_landmarks:
+                        print(handLandmarks)
                         drawingModule.draw_landmarks(blank_image, handLandmarks, handsModule.HAND_CONNECTIONS)
           
                 if ret:
