@@ -3,6 +3,7 @@ import cv2
 import mediapipe
 from time import sleep
 import sh
+from math import hypot
 import customStyleSheet as cs
 import webEngineBrowser as wb
 import embed_terminal_1 as et
@@ -165,22 +166,26 @@ class MainWindow(QWidget):
             
 
     def updateAll(self):
-            current_time = QTime.currentTime()
-            label_time = current_time.toString('hh:mm:ss')
-            self.time_label.setText(label_time)
+        mouseClickable = True
+        current_time = QTime.currentTime()
+        label_time = current_time.toString('hh:mm:ss')
+        self.time_label.setText(label_time)
     
     
     #FOR VIDEO
     def initVideo(self):
+        #HELPER HAND NAVIGATION 
+        frameX = S_WIDTH / 2
+        frameY = S_HEIGHT / 2
         self.image_label = QLabel(self)
-        self.image_label.resize(S_WIDTH, S_HEIGHT)
-        self.image_label.move((W_WIDTH-S_WIDTH)/2, (W_HEIGHT-S_HEIGHT)/2)
+        self.image_label.resize(frameX, frameY)
+        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2)
         self.border_label = QLabel(self)
-        self.border_label.resize(S_WIDTH - 2*FRAMER_X, S_HEIGHT - 2*FRAMER_Y)
-        self.border_label.move((W_WIDTH-S_WIDTH)/2 + FRAMER_X, (W_HEIGHT-S_HEIGHT)/2 + FRAMER_Y)
+        self.border_label.resize(frameX - FRAMER_X, frameY - FRAMER_Y)
+        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2)
         self.border_label.setStyleSheet("background-color: none; border-image: none; border-width: 2px; border-color: pink;")
         
-         # create the video capture thread
+        # create the video capture thread
         self.thread = VideoThread()
         # connect its signal to the update_image slot
         self.thread.change_pixmap_signal.connect(self.update_image)
@@ -200,10 +205,11 @@ class MainWindow(QWidget):
         global clocX
         global clocY
         global cur_landmark
+        global mouseClickable
 
         #Updates the image_label with a new opencv image
-        #qt_img = self.convert_cv_qt(cv_img)
-        #self.image_label.setPixmap(qt_img)
+        qt_img = self.convert_cv_qt(cv_img)
+        self.image_label.setPixmap(qt_img)
         #print(cur_landmark)
         if cur_landmark != (None, None): 
             #convert coordinates
@@ -220,13 +226,15 @@ class MainWindow(QWidget):
             
             #mouse events
             mouse.position = (clocX, clocY)
-            secondary_index_sq = (secondary_x - index_x)**2 + (secondary_y - index_y)**2
+            
+            length = hypot(cur_landmark[1].x - cur_landmark[0].x, cur_landmark[1].y - cur_landmark[0].y)
 
-            if( secondary_index_sq <= 11000 and secondary_index_sq >= 5000):
+            if( length <= 0.07):
+                self.program_log.setText("click!: {:.3f}".format(length))
                 mouse.click(Button.left, 1)
-                self.program_log.setText("click!")
+
             else:
-                self.program_log.setText("not click")
+                self.program_log.setText("not click: {:.3f}".format(length))
             
             plocX, plocY = clocX, clocY
             cur_landmark = (None, None)
@@ -237,7 +245,7 @@ class MainWindow(QWidget):
         h, w, ch = cv_img.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(cv_img.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(S_WIDTH, S_HEIGHT, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(S_WIDTH / 2, S_HEIGHT /2, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     #END FOR VIDEO
 

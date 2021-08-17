@@ -32,7 +32,7 @@ class Browser(QTabWidget):
         # Stylesheet
         self.setStyleSheet("border-width: 0px;")
         self.tabBar().setStyleSheet("background-color: white;")
-        self.cornerWidget().setStyleSheet("background-color: white; border-width: 0px; spacing: 0; border-top-left-radius:10px; border-top-right-radius:10px; margin-right:11px;")
+        self.cornerWidget().setStyleSheet("background-color: white; border-width: 0px; spacing: 0; border-top-left-radius:10px; border-top-right-radius:10px; margin-right:7px;")
         toolBar.setContentsMargins(10,0,10,0)
         toolBar.setSpacing(0)
         [x.setStyleSheet(cs.no_border_icon_style) for x in [self.plus_button, self.min_button, self.close_button]]
@@ -50,6 +50,7 @@ class Browser(QTabWidget):
         self.addNewTab()
     # end Constructor
 
+
     def removeTabSelf(self, index):
         #print("INDEX: {}".format(index))
         self.webPages[index].web.close()
@@ -64,6 +65,7 @@ class Browser(QTabWidget):
         self.tabNumber = self.tabNumber - 1
         if self.tabNumber == 0:
             self.webclose()
+
 
     def addNewTab(self):
         webPage = WebPage(size=self.pageSize)
