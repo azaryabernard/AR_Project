@@ -12,9 +12,24 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5 import QtGui
 from PyQt5.QtGui import QIcon, QWindow, QPixmap
 import numpy as np
+from pynput.mouse import Button, Controller
 
-W_WIDTH = 2560
-W_HEIGHT = 1440
+
+######################
+W_WIDTH = 1920
+W_HEIGHT = 1080
+S_WIDTH = 960
+S_HEIGHT = 540
+FRAMER_X = 100
+FRAMER_Y = 100
+SMOOTHENING = 5
+######################
+
+
+plocX,plocY = 0, 0
+clocX, clocY = 0, 0
+cur_landmark = (None,None)
+mouse = Controller()
 
 
 #EXPERIMENTAL VIDEO
@@ -30,25 +45,34 @@ class VideoThread(QThread):
         handsModule = mediapipe.solutions.hands
 
         cap = cv2.VideoCapture(0)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.7, max_num_hands=2) as hands:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, S_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, S_HEIGHT)
+        with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.8, min_tracking_confidence=0.5, max_num_hands=1) as hands:
 
             while self._run_flag:
                 ret, frame = cap.read()
                 flipped = cv2.flip(frame, flipCode = -1)
                 results = hands.process(cv2.cvtColor(flipped, cv2.COLOR_BGR2RGB))
                    
-                blank_image = np.zeros(shape=[480, 640, 3], dtype=np.uint8)
-                   
+                blank_image = np.zeros(shape=[S_HEIGHT, S_WIDTH, 3], dtype=np.uint8)
+                used_image = blank_image
+
+                #DRAWING THE HAND CONNECTION
                 if results.multi_hand_landmarks != None:
                     for handLandmarks in results.multi_hand_landmarks:
-                        print(handLandmarks)
-                        drawingModule.draw_landmarks(blank_image, handLandmarks, handsModule.HAND_CONNECTIONS)
+                        drawingModule.draw_landmarks(used_image, handLandmarks, handsModule.HAND_CONNECTIONS)
           
                 if ret:
-                    self.change_pixmap_signal.emit(blank_image)
+                    if results.multi_hand_landmarks:
+                        global cur_landmark
+                        cur_landmark = (results.multi_hand_landmarks[0].landmark[8], 
+                                        results.multi_hand_landmarks[0].landmark[12])
+                        #4 THUMB, secondary TIP
+                        #8 INDEX FINGER TIP
+                        #12 MIDDLE
+
+                    #cv2.rectangle( used_image, (FRAMER_X, FRAMER_Y), (S_WIDTH-FRAMER_X, S_HEIGHT-FRAMER_Y), (255,0,255), 2)
+                    self.change_pixmap_signal.emit(used_image)
                     
         
     def stop(self):
@@ -93,19 +117,19 @@ class MainWindow(QWidget):
     def init_buttons(self):
         #EXIT BUTTON
         self.exit_button = QPushButton('X', self)
-        self.exit_button.resize(50,50)
+        self.exit_button.resize(37,37)
         self.exit_button.setStyleSheet(cs.exit_button_style)
-        self.exit_button.move(W_WIDTH-60, W_HEIGHT-60)
+        self.exit_button.move(W_WIDTH-45, W_HEIGHT-45)
         self.exit_button.clicked.connect(self.close)
         
         #SIDEBAR BUTTONS
-        offsetX = 10
-        offsetY = 300
+        offsetX = 8
+        offsetY = 225
         self.browserBtn = QPushButton(self)
         self.browserBtn.setIcon(QIcon('../image/webBrowserIconGray.png'))
-        self.browserBtn.setIconSize(QSize(96, 96))
+        self.browserBtn.setIconSize(QSize(72, 72))
         self.browserBtn.setStyleSheet(cs.icon_style)
-        self.browserBtn.resize(125,125)
+        self.browserBtn.resize(96,96)
         self.browserBtn.move(offsetX, offsetY)
         self.browserBtn.clicked.connect(self.browserBtnClicked)
 
@@ -113,13 +137,13 @@ class MainWindow(QWidget):
     def init_labels(self):
         self.time_label = QLabel('', self)
         self.time_label.setAlignment(Qt.AlignCenter)
-        self.time_label.resize(200, 80)
-        self.time_label.move(W_WIDTH-210, 10)
+        self.time_label.resize(150, 60)
+        self.time_label.move(W_WIDTH-158, 8)
         self.time_label.setStyleSheet(cs.time_label_style)
 
         self.program_log = QLabel('Log: ', self)
         self.program_log.setAlignment(Qt.AlignRight)
-        self.program_log.resize(200, 40)
+        self.program_log.resize(150, 30)
         self.program_log.move(10, W_HEIGHT-50)
         self.program_log.setStyleSheet('color:green; font: 20px; border:0px; ')
 
@@ -127,11 +151,10 @@ class MainWindow(QWidget):
     def browserBtnClicked(self):
         if not self.webBrowser.isEnabled():
             self.program_log.setText('open browser')
-            self.webBrowser = wb.Browser()
+            self.webBrowser = wb.Browser(size=[626, 672])
             self.webBrowser.setEnabled(True)
             self.layout().addWidget(self.webBrowser, 1, 2, 1, 1)
             
-
         elif not self.webBrowser.isVisible():
             self.program_log.setText("un-minimized browser")
             self.webBrowser.setVisible(True)
@@ -141,34 +164,21 @@ class MainWindow(QWidget):
             pass
             
 
-
     def updateAll(self):
             current_time = QTime.currentTime()
             label_time = current_time.toString('hh:mm:ss')
             self.time_label.setText(label_time)
-
-    
-    def experimental(self):
-        et.Container()
-        sleep(3)
-        winid = int([l for l in sh.xwininfo('-root', '-tree').split('\n') if "Mozilla Firefox" in l][0].split('"Mozilla Firefox"')[0].strip(), 16)
-        testWindow = QWindow.fromWinId(winid)
-        testWindow.setFlags(Qt.FramelessWindowHint)
-        testWindow.resize(300,300)
-        self.testWidgetFromWindow = QWidget.createWindowContainer(testWindow)
-        self.testWidgetFromWindow.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.testWidgetFromWindow.setStyleSheet("background-color: white;")
-        self.layout().addWidget(self.testWidgetFromWindow)
     
     
     #FOR VIDEO
     def initVideo(self):
-        self.display_width = 640
-        self.display_height = 480
-        
         self.image_label = QLabel(self)
-        self.image_label.resize(self.display_width, self.display_height)
-        self.image_label.move((W_WIDTH-self.display_width)/2, (W_HEIGHT-self.display_height)/2)
+        self.image_label.resize(S_WIDTH, S_HEIGHT)
+        self.image_label.move((W_WIDTH-S_WIDTH)/2, (W_HEIGHT-S_HEIGHT)/2)
+        self.border_label = QLabel(self)
+        self.border_label.resize(S_WIDTH - 2*FRAMER_X, S_HEIGHT - 2*FRAMER_Y)
+        self.border_label.move((W_WIDTH-S_WIDTH)/2 + FRAMER_X, (W_HEIGHT-S_HEIGHT)/2 + FRAMER_Y)
+        self.border_label.setStyleSheet("background-color: none; border-image: none; border-width: 2px; border-color: pink;")
         
          # create the video capture thread
         self.thread = VideoThread()
@@ -185,18 +195,64 @@ class MainWindow(QWidget):
         
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
-        """Updates the image_label with a new opencv image"""
+        global plocX
+        global plocY
+        global clocX
+        global clocY
+        global cur_landmark
+
+        #Updates the image_label with a new opencv image
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
+        #print(cur_landmark)
+        if cur_landmark != (None, None): 
+            #convert coordinates
+            (index_x, index_y) = (np.interp(cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
+                                    np.interp(cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
+            
+            
+            (secondary_x, secondary_y) = (np.interp(cur_landmark[1].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
+                                            np.interp(cur_landmark[1].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
+
+            #smoothening
+            clocX = plocX + (index_x - plocX) / SMOOTHENING
+            clocY = plocY + (index_y - plocY) / SMOOTHENING
+            
+            #mouse events
+            mouse.position = (clocX, clocY)
+            secondary_index_sq = (secondary_x - index_x)**2 + (secondary_y - index_y)**2
+
+            if( secondary_index_sq <= 11000 and secondary_index_sq >= 5000):
+                mouse.click(Button.left, 1)
+                self.program_log.setText("click!")
+            else:
+                self.program_log.setText("not click")
+            
+            plocX, plocY = clocX, clocY
+            cur_landmark = (None, None)
+            
     
     def convert_cv_qt(self, cv_img):
-        """Convert from an opencv image to QPixmap"""
+        #Convert from an opencv image to QPixmap
         h, w, ch = cv_img.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(cv_img.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(S_WIDTH, S_HEIGHT, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     #END FOR VIDEO
+
+    
+    def experimental(self):
+        et.Container()
+        sleep(3)
+        winid = int([l for l in sh.xwininfo('-root', '-tree').split('\n') if "Mozilla Firefox" in l][0].split('"Mozilla Firefox"')[0].strip(), 16)
+        testWindow = QWindow.fromWinId(winid)
+        testWindow.setFlags(Qt.FramelessWindowHint)
+        testWindow.resize(300,300)
+        self.testWidgetFromWindow = QWidget.createWindowContainer(testWindow)
+        self.testWidgetFromWindow.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.testWidgetFromWindow.setStyleSheet("background-color: white;")
+        self.layout().addWidget(self.testWidgetFromWindow)
 
 
 def main(): 

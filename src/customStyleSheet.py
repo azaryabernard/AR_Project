@@ -18,8 +18,8 @@ exit_button_style = dedent(
             border-width: 2px; 
             border-radius: 10px; 
             border-color: beige; 
-            font: bold 28px; 
-            padding: 6px; 
+            font: bold 21px; 
+            padding: 5px; 
         }  
         QPushButton:hover { 
             background-color: """+ cpalette["red"][1] +""";  
@@ -36,8 +36,8 @@ time_label_style = dedent(
             border-style: outset; 
             border-width: 2px; 
             border-radius: 10px;  
-            font: 36px; 
-            padding: 4px; 
+            font: 27px; 
+            padding: 3px; 
         } """)
 
 icon_style = dedent(
@@ -46,8 +46,8 @@ icon_style = dedent(
             border-style: outset; 
             border-width: 2px; 
             border-radius: 10px;  
-            font: 36px; 
-            padding: 4px; 
+            font: 27px; 
+            padding: 3px; 
         }  
         QPushButton:hover { 
             background-color: """+ cpalette["orange"][1] +""";  
@@ -64,7 +64,7 @@ small_icon_style = dedent(
             border-width: 1px; 
             border-radius: 5px;  
             border-color: grey;
-            font: 18px bold; 
+            font: 14px bold; 
             padding: 1px; 
         }  
         QPushButton:hover { 
@@ -82,7 +82,7 @@ small_line_style = dedent(
             border-width: 1px; 
             border-color: grey;
             border-radius: 5px;  
-            font: 18px; 
+            font: 14px; 
             padding: 2px; 
         }  """
 )
@@ -105,10 +105,10 @@ no_border_icon_style = dedent(
             border-width: 0px; 
             border-radius: 0px;  
             border-color: none;
-            font: 24px bold; 
+            font: 18px bold; 
             padding: 0px; 
-            min-width:35px;
-            max-width:35px;
+            min-width:27px;
+            max-width:27px;
         }  
         QPushButton:hover { 
             background-color: """+ cpalette["orange"][1] +""";  

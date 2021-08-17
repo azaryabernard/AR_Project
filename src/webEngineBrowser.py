@@ -11,6 +11,7 @@ class Browser(QTabWidget):
     def __init__(self, size=[835,895]):
         # Inits and Setup
         super().__init__()
+        self.pageSize = size
         self.tabNumber = 0
         self.webPages = []
         self.resize(10,10)
@@ -19,13 +20,13 @@ class Browser(QTabWidget):
         cornerWidget = QWidget(self)
         toolBar = QHBoxLayout(cornerWidget)
         # Buttons in the corner
-        plus_button = QPushButton(' + ', self)
-        min_button = QPushButton('—', self)
-        close_button = QPushButton(' x ', self)
+        self.plus_button = QPushButton(' + ', self)
+        self.min_button = QPushButton('—', self)
+        self.close_button = QPushButton(' x ', self)
         # Add widgets
-        toolBar.addWidget(plus_button)
-        toolBar.addWidget(min_button)
-        toolBar.addWidget(close_button)
+        toolBar.addWidget(self.plus_button)
+        toolBar.addWidget(self.min_button)
+        toolBar.addWidget(self.close_button)
         self.setCornerWidget(cornerWidget)
 
         # Stylesheet
@@ -34,17 +35,16 @@ class Browser(QTabWidget):
         self.cornerWidget().setStyleSheet("background-color: white; border-width: 0px; spacing: 0; border-top-left-radius:10px; border-top-right-radius:10px; margin-right:11px;")
         toolBar.setContentsMargins(10,0,10,0)
         toolBar.setSpacing(0)
-        [x.setStyleSheet(cs.no_border_icon_style) for x in [plus_button, min_button, close_button]]
+        [x.setStyleSheet(cs.no_border_icon_style) for x in [self.plus_button, self.min_button, self.close_button]]
 
         # Properties
         self.setMovable(True)
         self.setTabsClosable(True)
-
         # Signals
         self.tabCloseRequested.connect(self.removeTabSelf)
-        plus_button.clicked.connect(self.addNewTab)
-        min_button.clicked.connect(lambda x: self.setVisible(x), False)
-        close_button.clicked.connect(self.webclose)
+        self.plus_button.clicked.connect(self.addNewTab)
+        self.min_button.clicked.connect(lambda x: self.setVisible(x), False)
+        self.close_button.clicked.connect(self.webclose)
                
         #DefaultHomePage
         self.addNewTab()
@@ -66,7 +66,7 @@ class Browser(QTabWidget):
             self.webclose()
 
     def addNewTab(self):
-        webPage = WebPage()
+        webPage = WebPage(size=self.pageSize)
         self.webPages.append(webPage)
         self.addTab(webPage, "https://www.google.com/")        
         index = self.tabNumber
