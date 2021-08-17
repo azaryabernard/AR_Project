@@ -202,8 +202,8 @@ class MainWindow(QWidget):
         global cur_landmark
 
         #Updates the image_label with a new opencv image
-        qt_img = self.convert_cv_qt(cv_img)
-        self.image_label.setPixmap(qt_img)
+        #qt_img = self.convert_cv_qt(cv_img)
+        #self.image_label.setPixmap(qt_img)
         #print(cur_landmark)
         if cur_landmark != (None, None): 
             #convert coordinates
