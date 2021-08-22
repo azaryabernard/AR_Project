@@ -14,8 +14,6 @@ class Browser(QTabWidget):
         self.pageSize = size
         self.tabNumber = 0
         self.webPages = []
-        self.resize(10,10)
-
         # Corner Widget storing AddTab, minimized browser, close browser
         cornerWidget = QWidget(self)
         toolBar = QHBoxLayout(cornerWidget)
@@ -73,6 +71,7 @@ class Browser(QTabWidget):
         self.addTab(webPage, "https://www.google.com/")        
         index = self.tabNumber
         self.setTabText(index, "google")
+        self.setCurrentIndex(self.tabNumber)
         webPage.web.urlChanged.connect(lambda state, x=index: self.url_change(x, state))
         self.tabNumber = self.tabNumber + 1
 
@@ -107,11 +106,11 @@ class WebPage(QWidget):
         self.frame = QFrame(self)
         self.frame.resize(size[0],size[1])
         self.frame.setStyleSheet(cs.webBrowser_style)
-        self.resize(size[0],size[1])
 
         #Setup WebEngine WebView
         self.web = QWebEngineView()
         self.web.load(QUrl(default_url))
+        
 
         #TOOLBAR
         self.horizontalLayout = QHBoxLayout()

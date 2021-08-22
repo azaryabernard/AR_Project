@@ -47,7 +47,12 @@ icon_style = dedent(
             border-width: 2px; 
             border-radius: 10px;  
             font: 27px; 
-            padding: 3px; 
+            padding: 3px;
+            min-width:96px;
+            max-width:96px;
+            min-height:96px;
+            max-height:96px;
+            qproperty-iconSize: 72px;
         }  
         QPushButton:hover { 
             background-color: """+ cpalette["orange"][1] +""";  
@@ -65,7 +70,7 @@ small_icon_style = dedent(
             border-radius: 5px;  
             border-color: grey;
             font: 14px bold; 
-            padding: 10px; 
+            padding: 8px; 
         }  
         QPushButton:hover { 
             background-color: """+ cpalette["orange"][1] +""";  
@@ -83,7 +88,7 @@ small_line_style = dedent(
             border-color: grey;
             border-radius: 5px;  
             font: 14px; 
-            padding: 2px; 
+            padding: 5px; 
         }  """
 )
 
@@ -118,3 +123,7 @@ no_border_icon_style = dedent(
             background-color: """+ cpalette["orange"][2] +"""; 
             border-style: inset; 
         }""")
+
+log_style = 'color:green; font: 20px; border:0px; '
+
+ht_border_style = "background-color: none; border-image: none; border-width: 2px; border-color: pink;"
