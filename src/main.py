@@ -17,6 +17,8 @@ from _config import *
 
 ######################
 MOUSE = Controller()
+MOUSE_CLICKABLE = True
+MOUSE_TRACKABLE = False
 APP_POS = [2,1,3]
 PCIDS = []
 plocX,plocY = 0, 0
@@ -286,18 +288,23 @@ class MainWindow(QWidget):
             #convert coordinates
             (index_x, index_y) = (np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
                                     np.interp(ht.cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
+            
+            
+            #self.program_log.setText(str(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))
+            
+            self.program_log.setText("length: {:.3f}".format(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))
+            if (not MOUSE_TRACKABLE):
+                return
 
             length = hypot(ht.cur_landmark[1].x - ht.cur_landmark[0].x, ht.cur_landmark[1].y - ht.cur_landmark[0].y)
-
-            #smoothening
-            clocX = plocX + (index_x - plocX) / SMOOTHENING
-            clocY = plocY + (index_y - plocY) / SMOOTHENING
-            
             #mouse events
-            if(length >= 0.1):
+            if length >= 0.1:
+                #smoothening
+                clocX = plocX + (index_x - plocX) / SMOOTHENING
+                clocY = plocY + (index_y - plocY) / SMOOTHENING
                 MOUSE.position = (clocX, clocY)
 
-            if(MOUSE_CLICKABLE and length >= 0.022 and length <= 0.06):
+            if(MOUSE_CLICKABLE and length >= 0.022 and length <= 0.05):
                 self.program_log.setText("click!: {:.3f}".format(length))
                 MOUSE.click(Button.left, 1)
                 MOUSE_CLICKABLE = False

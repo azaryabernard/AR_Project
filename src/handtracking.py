@@ -24,6 +24,7 @@ class VideoThread(QThread):
         with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.8, min_tracking_confidence=0.5, max_num_hands=1) as hands:
 
             while self._run_flag:
+                self.sleep(0.1)
                 ret, frame = cap.read()
                 if not ret:
                     continue
@@ -44,9 +45,11 @@ class VideoThread(QThread):
                     if results.multi_hand_landmarks:
                         global cur_landmark
                         cur_landmark = (results.multi_hand_landmarks[0].landmark[8], 
-                                        results.multi_hand_landmarks[0].landmark[12])
+                                        results.multi_hand_landmarks[0].landmark[12],
+                                        results.multi_hand_landmarks[0].landmark[20])
                         #4 THUMB, secondary TIP
                         #8 INDEX FINGER TIP
+                        #6 first join index
                         #12 MIDDLE
 
                     #cv2.rectangle( used_image, (FRAMER_X, FRAMER_Y), (S_WIDTH-FRAMER_X, S_HEIGHT-FRAMER_Y), (255,0,255), 2)
