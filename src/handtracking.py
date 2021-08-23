@@ -25,7 +25,11 @@ class VideoThread(QThread):
 
             while self._run_flag:
                 ret, frame = cap.read()
+                if not ret:
+                    continue
+                
                 flipped = cv2.flip(frame, flipCode = 0)
+                
                 results = hands.process(cv2.cvtColor(flipped, cv2.COLOR_BGR2RGB))
                    
                 blank_image = np.zeros(shape=[S_HEIGHT, S_WIDTH, 3], dtype=np.uint8)

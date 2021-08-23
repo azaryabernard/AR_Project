@@ -4,39 +4,39 @@ from textwrap import dedent
 cpalette = {
     "black": ["#1D1C1A"],
     "red": ["#F9665E", "#D9404A", "#9B0700"],
-    "orange": ["#FC6600","#FF964F", "#D45500"]
+    "orange": ["#FC6600","#FF964F", "#D45500"],
+    "beige": ["beige"],
+    "gray": ["gray"]
 }
 
 
-mainwindow_style = "QWidget { background-color: black; border: 2px solid beige; }"
+#mainwindow_style = "QWidget { background-color: green;}"
 
-exit_button_style = dedent(
+smallIcon_style = dedent(
     """QPushButton { 
-            color: """+ cpalette["black"][0] +""";
-            background-color: """+ cpalette["red"][0] +"""; 
+            color: """+ cpalette["gray"][0] +""";
+            background-color: """+ cpalette["beige"][0] +"""; 
             border-style: outset; 
-            border-width: 2px; 
+            border-width: 0px; 
             border-radius: 10px; 
             border-color: beige; 
             font: bold 21px; 
-            padding: 5px; 
+            padding: 5px;
+            qproperty-iconSize: 34px;
         }  
         QPushButton:hover { 
-            background-color: """+ cpalette["red"][1] +""";  
+            background-color: """+ cpalette["orange"][1] +""";  
         } 
         QPushButton:pressed {
-            background-color: """+ cpalette["red"][2] +"""; 
+            background-color: """+ cpalette["orange"][2] +"""; 
             border-style: inset; 
         }""")
 
 time_label_style = dedent(
     """QLabel { 
-            color: """+ cpalette["black"][0] +""";
-            background-color: """+ "beige" +"""; 
-            border-style: outset; 
-            border-width: 2px; 
-            border-radius: 10px;  
-            font: 27px; 
+            color: beige;
+            border-width: 0px; 
+            font: 32px; 
             padding: 3px; 
         } """)
 
@@ -100,7 +100,7 @@ webBrowser_style = dedent(
     border-color: white;
     border-bottom-right-radius: 10px; 
     border-bottom-left-radius: 10px; 
-    padding: 4px
+    padding: 4px;
     """
 )
 
@@ -124,6 +124,8 @@ no_border_icon_style = dedent(
             border-style: inset; 
         }""")
 
-log_style = 'color:green; font: 20px; border:0px; '
+log_style = "color:green; font: 20px; border:0px;"
 
-ht_border_style = "background-color: none; border-image: none; border-width: 2px; border-color: pink;"
+ht_border_style = "border-style: inset; border-width: 3px; border-color: pink;"
+
+cornerWidget_style = "background-color: white; border-width: 0px; spacing: 0; border-top-left-radius:10px; border-top-right-radius:10px; margin-right:0px;"

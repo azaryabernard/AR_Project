@@ -9,7 +9,7 @@ from math import hypot
 from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QLabel, QGridLayout, QVBoxLayout
 from PyQt5.QtCore import QTimer, QTime, Qt, QSize, pyqtSlot
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon, QPixmap, QWindow, QImage
+from PyQt5.QtGui import QIcon, QPixmap, QWindow, QImage, QBrush, QPalette
 from pynput.mouse import Button, Controller
 from _config import *
 
@@ -29,11 +29,15 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle('AR Prototype 0.1')
         self.resize(W_WIDTH, W_HEIGHT)
-        self.setStyleSheet(cs.mainwindow_style);
         self.initUI()
         
         
     def initUI(self):
+        oImage = QImage("../image/backgroundV1.png")
+        sImage = oImage.scaled(QSize(W_WIDTH, W_HEIGHT))
+        palette = QPalette()
+        palette.setBrush(QPalette.Window, QBrush(sImage))
+        self.setPalette(palette)
         lay = QGridLayout()
         lay.setColumnStretch(0, 1)
         lay.setColumnStretch(1, 5)
@@ -48,7 +52,8 @@ class MainWindow(QWidget):
         self.init_buttons()
         self.init_labels()
         self.webBrowser = None
-        self.embeddedApp = None
+        self.embeddedApp1 = None
+        self.embeddedApp2 = None
 
         #Timer for updating all widgets
         timer = QTimer(self)
@@ -57,13 +62,23 @@ class MainWindow(QWidget):
     
 
     def init_buttons(self):
-        vertLayout = QVBoxLayout()
+        self.dummyBtn = QPushButton(self)
+        self.dummyBtn.resize(0, 0)
         #EXIT BUTTON
-        self.exit_button = QPushButton('X', self)
-        self.exit_button.resize(37,37)
-        self.exit_button.setStyleSheet(cs.exit_button_style)
-        self.exit_button.move(W_WIDTH-45, W_HEIGHT-45)
-        self.exit_button.clicked.connect(self.close)
+        self.powerBtn = QPushButton(self)
+        self.powerBtn.setIcon(QIcon('../image/powerIcon.png'))
+        self.powerBtn.resize(50,50)
+        self.powerBtn.setStyleSheet(cs.smallIcon_style)
+        self.powerBtn.move(W_WIDTH-80, 40)
+        self.powerBtn.clicked.connect(self.close)
+        
+        #MIC BUTTON
+        self.micBtn = QPushButton(self)
+        self.micBtn.setIcon(QIcon('../image/microphoneIcon.png'))
+        self.micBtn.resize(50,50)
+        self.micBtn.setStyleSheet(cs.smallIcon_style)
+        self.micBtn.move(30, 40)
+        #self.micBtn.clicked.connect(self.close)
         
         #SIDEBAR BUTTONS
         self.browserBtn = QPushButton(self)
@@ -74,17 +89,19 @@ class MainWindow(QWidget):
         self.youtubeBtn = QPushButton(self)
         self.youtubeBtn.setIcon(QIcon('../image/youtubeIcon.png'))
         self.youtubeBtn.setStyleSheet(cs.icon_style)
-        self.youtubeBtn.clicked.connect(lambda state, appname='YouTube', args=["--profile-directory=Profile 1", "--app-id=agimnkijcaahngcdmfeangaknmldooml"]: self.embed_app(appname, args))
+        self.youtubeBtn.clicked.connect(lambda state, appname='YouTube', args=["--profile-directory=Profile 1", "--app-id=agimnkijcaahngcdmfeangaknmldooml"]: self.embed_app1(appname, args))
         
         self.terminalBtn = QPushButton(self)
         self.terminalBtn.setIcon(QIcon('../image/terminalIcon.png'))
         self.terminalBtn.setStyleSheet(cs.icon_style)
-        self.terminalBtn.clicked.connect(lambda state, appname='lxterminal', args=["--working-directory=/home/pi/Desktop"]: self.embed_app(appname, args))
+        self.terminalBtn.clicked.connect(lambda state, appname='lxterminal', args=["--working-directory=/home/pi/Desktop"]: self.embed_app2(appname, args))
         
-        self.handTrackingBtn = QPushButton('HT', self)
+        self.handTrackingBtn = QPushButton(self)
+        self.handTrackingBtn.setIcon(QIcon('../image/handIcon.png'))
         self.handTrackingBtn.setStyleSheet(cs.icon_style)
         self.handTrackingBtn.clicked.connect(self.initVideo)
         
+        vertLayout = QVBoxLayout()
         vertLayout.addWidget(self.browserBtn)
         vertLayout.addWidget(self.youtubeBtn)
         vertLayout.addWidget(self.terminalBtn)
@@ -98,12 +115,12 @@ class MainWindow(QWidget):
         self.time_label = QLabel('', self)
         self.time_label.setAlignment(Qt.AlignCenter)
         self.time_label.resize(150, 60)
-        self.time_label.move(W_WIDTH-158, 8)
+        self.time_label.move( (W_WIDTH-150) / 2, 35)
         self.time_label.setStyleSheet(cs.time_label_style)
 
         self.program_log = QLabel('Log: ', self)
-        self.program_log.setAlignment(Qt.AlignRight)
-        self.program_log.resize(150, 30)
+        self.program_log.setAlignment(Qt.AlignLeft)
+        self.program_log.resize(300, 35)
         self.program_log.move(10, W_HEIGHT-50)
         self.program_log.setStyleSheet(cs.log_style)
 
@@ -111,54 +128,70 @@ class MainWindow(QWidget):
         frameY = S_HEIGHT / 2
         self.image_label = QLabel(self)
         self.image_label.resize(frameX, frameY)
-        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2)
+        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
+        self.image_label.setStyleSheet(cs.ht_border_style)
         self.border_label = QLabel(self)
         self.border_label.resize(frameX - FRAMER_X, frameY - FRAMER_Y)
-        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2)
+        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
         self.border_label.setStyleSheet(cs.ht_border_style) 
         self.border_label.setVisible(False)
         self.image_label.setVisible(False)
 
 
-    def embed_app(self, appname, args):
-        if not self.embeddedApp or not self.embeddedApp.isEnabled():
-            self.embeddedApp = embed.EmbeddedApp(appname, args)
-            if not self.embeddedApp:
+    def embed_app1(self, appname, args):
+        if not self.embeddedApp1 or not self.embeddedApp1.isEnabled():
+            self.embeddedApp1 = embed.EmbeddedApp(appname, args)
+            if not self.embeddedApp1:
                 self.program_log.setText("App not opened!")
                 return
             
             global PCIDS
-            PCIDS.append(self.embeddedApp.pcid)
+            PCIDS.append(self.embeddedApp1.pcid)
             
             self.program_log.setText("App opened")
             if appname == "YouTube":
-                self.layout().addWidget(self.embeddedApp, 1, 1, 2, 1)
+                self.layout().addWidget(self.embeddedApp1, 1, 1, 2, 1)
             elif appname == "lxterminal":
-                self.layout().addWidget(self.embeddedApp, 2, 2, 1, 1)
-            
-            if not self.webBrowser or not self.webBrowser.isEnabled():
-                pass
-            else:
-                size = self.webBrowser.pageSize
-                for wp in self.webBrowser.webPages:
-                    wp.frame.resize(size[0]-2,size[1])
+                self.layout().addWidget(self.embeddedApp1, 2, 2, 1, 1)
         
-        elif not self.embeddedApp.isVisible() and self.embeddedApp.isEnabled():
+        elif not self.embeddedApp1.isVisible() and self.embeddedApp1.isEnabled():
             self.program_log.setText("maximized embedApp")
-            self.embeddedApp.setVisible(True)
-            pass
+            self.embeddedApp1.setVisible(True)
         else:
             self.program_log.setText('passed')
-            pass
+        if HANDTRACKED:
+            self.closeHand()
+            self.initVideo()
+        
+    def embed_app2(self, appname, args):
+        if not self.embeddedApp2 or not self.embeddedApp2.isEnabled():
+            self.embeddedApp2 = embed.EmbeddedApp(appname, args)
+            if not self.embeddedApp2:
+                self.program_log.setText("App not opened!")
+                return
+            
+            global PCIDS
+            PCIDS.append(self.embeddedApp2.pcid)
+            
+            self.program_log.setText("App opened")
+            if appname == "YouTube":
+                self.layout().addWidget(self.embeddedApp2, 1, 1, 2, 1)
+            elif appname == "lxterminal":
+                self.layout().addWidget(self.embeddedApp2, 2, 2, 1, 1)
+        
+        elif not self.embeddedApp2.isVisible() and self.embeddedApp2.isEnabled():
+            self.program_log.setText("maximized embedApp")
+            self.embeddedApp2.setVisible(True)
+        else:
+            self.program_log.setText('passed')
+        if HANDTRACKED:
+            self.closeHand()
+            self.initVideo()
         
         
         
     def browserBtnClicked(self):
-        browserSize = [588, 672]
-        if not self.embeddedApp or not self.embeddedApp.isEnabled():
-            pass
-        else:
-            browserSize = [586, 672]
+        browserSize = [595, 672]
             
         if not self.webBrowser or not self.webBrowser.isEnabled():
             self.program_log.setText('open browser')
@@ -174,8 +207,6 @@ class MainWindow(QWidget):
             self.program_log.setText('passed')
             pass
         
-    
-            
 
     def updateAll(self):
         global MOUSE_CLICKABLE
@@ -188,12 +219,13 @@ class MainWindow(QWidget):
     #FOR VIDEO
     def initVideo(self):
         global HANDTRACKED
+        print("clicked from: {}", HANDTRACKED)
         self.border_label.setVisible(True)
         self.image_label.setVisible(True)
 
         if(HANDTRACKED):
             self.handTrackingBtn.disconnect()
-            self.handTrackingBtn.clicked.connect(self.closeEvent)
+            self.handTrackingBtn.clicked.connect(self.closeHand)
             return
 
         HANDTRACKED = True
@@ -203,26 +235,39 @@ class MainWindow(QWidget):
         self.thread.start()
     
     
-    def closeEvent(self, event):
+    def closeHand(self):
         global HANDTRACKED
-        global PCIDS
-        print("Closing...")
         self.handTrackingBtn.disconnect()
         self.handTrackingBtn.clicked.connect(self.initVideo)
         self.border_label.setVisible(False)
         self.image_label.setVisible(False)
-        
-        if self.embeddedApp:
-            for pcid in PCIDS:
-                try:
-                    sh.kill('-9', pcid)
-                except:
-                    pass
-            self.embeddedApp.close()
-            
         if HANDTRACKED:
             HANDTRACKED = False
             self.thread.stop()
+    
+    
+    def closeEvent(self, event):
+        global PCIDS
+        global HANDTRACKED
+        for pcid in PCIDS[:]:
+            try:
+                sh.kill('-9', pcid)
+                PCIDS.remove(pcid)
+            except:
+                print("ERROR: Cannot Kill PCID: {} in closeEvent!".format(pcid))
+                
+        if self.embeddedApp1:
+            self.embeddedApp1.close()
+        if self.embeddedApp2:
+            self.embeddedApp2.close()
+        if HANDTRACKED:
+            HANDTRACKED = False
+            self.thread.stop()
+        #try:    
+         #   sh.pkill('-o', 'chromium')
+        #except:
+         #   print('no chromium')
+        print("Closing...")
         
         
     @pyqtSlot(np.ndarray)

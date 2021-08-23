@@ -91,6 +91,6 @@ class EmbeddedApp(QWidget):
         try:
             sh.kill('-9', self.pcid)
         except:
-            pass
+            print("unable to kill from close button {}".format(self.pcid))
         self.setEnabled(False)
         self.close()

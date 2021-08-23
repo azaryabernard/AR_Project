@@ -28,9 +28,9 @@ class Browser(QTabWidget):
         self.setCornerWidget(cornerWidget)
 
         # Stylesheet
-        self.setStyleSheet("border-width: 0px;")
-        self.tabBar().setStyleSheet("background-color: white;")
-        self.cornerWidget().setStyleSheet("background-color: white; border-width: 0px; spacing: 0; border-top-left-radius:10px; border-top-right-radius:10px; margin-right:7px;")
+        self.setStyleSheet("background-color: black; border-width: 0px;")
+        #self.tabBar().setStyleSheet("background-color: white;")
+        self.cornerWidget().setStyleSheet(cs.cornerWidget_style)
         toolBar.setContentsMargins(10,0,10,0)
         toolBar.setSpacing(0)
         [x.setStyleSheet(cs.no_border_icon_style) for x in [self.plus_button, self.min_button, self.close_button]]
@@ -106,6 +106,7 @@ class WebPage(QWidget):
         self.frame = QFrame(self)
         self.frame.resize(size[0],size[1])
         self.frame.setStyleSheet(cs.webBrowser_style)
+        self.resize(size[0], size[1])
 
         #Setup WebEngine WebView
         self.web = QWebEngineView()
