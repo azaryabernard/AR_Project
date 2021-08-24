@@ -46,3 +46,9 @@ print(winid)
 sleep(1)
 sh.xdotool('windowmove', winid, OFFSET_X2, OFFSET_Y2)
 #sh.xrandr('-x')
+
+for appname in ['vncviewer": ("lxterminal"', 'python3": ("lxterminal"', 'x11vnc": ("lxterminal"' , 'pi@raspberrypi: ~/AR_Project/src": ("lxterminal"']:
+    ret, winid = searchWinID(appname)
+    if not ret:
+        continue
+    sh.xdotool('windowminimize', winid)

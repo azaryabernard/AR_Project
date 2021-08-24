@@ -119,7 +119,7 @@ class MainWindow(QWidget):
         self.time_label = QLabel('', self)
         self.time_label.setAlignment(Qt.AlignCenter)
         self.time_label.resize(150, 60)
-        self.time_label.move( (W_WIDTH-150) / 2, 35)
+        self.time_label.move( (W_WIDTH-150) / 2, 42)
         self.time_label.setStyleSheet(cs.time_label_style)
 
         self.program_log = QLabel('Log: ', self)
@@ -132,11 +132,9 @@ class MainWindow(QWidget):
         frameY = S_HEIGHT / 2
         self.image_label = QLabel(self)
         self.image_label.resize(frameX, frameY)
-        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
         self.image_label.setStyleSheet(cs.ht_border_style)
         self.border_label = QLabel(self)
         self.border_label.resize(frameX - FRAMER_X, frameY - FRAMER_Y)
-        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
         self.border_label.setStyleSheet(cs.ht_border_style) 
         self.border_label.setVisible(False)
         self.image_label.setVisible(False)
@@ -223,9 +221,20 @@ class MainWindow(QWidget):
     #FOR VIDEO
     def initVideo(self):
         global HANDTRACKED
-        print("clicked from: {}", HANDTRACKED)
-        self.border_label.setVisible(True)
+        #print("clicked from: {}", HANDTRACKED)
         self.image_label.setVisible(True)
+        self.border_label.setVisible(True)
+        frameX = S_WIDTH / 2
+        frameY = S_HEIGHT / 2
+        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
+        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
+        
+        if(not self.embeddedApp1 or not self.embeddedApp1.isEnabled() or not self.embeddedApp1.isVisible() ):
+            pass
+        else:
+            self.border_label.move(self.border_label.x() + 40, self.border_label.y())
+            self.image_label.move(self.image_label.x() + 40, self.image_label.y())
+        
 
         if(HANDTRACKED):
             self.handTrackingBtn.disconnect()
@@ -267,10 +276,10 @@ class MainWindow(QWidget):
         if HANDTRACKED:
             HANDTRACKED = False
             self.thread.stop()
-        #try:    
-         #   sh.pkill('-o', 'chromium')
-        #except:
-         #   print('no chromium')
+        try:    
+           sh.pkill('-o', 'chromium')
+        except:
+           print('no chromium')
         print("Closing...")
         
         

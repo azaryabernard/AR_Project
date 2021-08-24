@@ -36,7 +36,7 @@ time_label_style = dedent(
     """QLabel { 
             color: beige;
             border-width: 0px; 
-            font: 32px; 
+            font: 28px; 
             padding: 3px; 
         } """)
 
