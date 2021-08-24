@@ -1,3 +1,4 @@
+import os
 import sys
 import sh
 import numpy as np
@@ -18,11 +19,12 @@ from _config import *
 ######################
 MOUSE = Controller()
 MOUSE_CLICKABLE = True
-MOUSE_TRACKABLE = False
+#MOUSE_TRACKABLE = False
 APP_POS = [2,1,3]
 PCIDS = []
 plocX,plocY = 0, 0
 clocX, clocY = 0, 0
+os.chdir('/home/pi/AR_Project/src')
 ######################
         
         
@@ -42,9 +44,9 @@ class MainWindow(QWidget):
         self.setPalette(palette)
         lay = QGridLayout()
         lay.setColumnStretch(0, 1)
-        lay.setColumnStretch(1, 5)
-        lay.setColumnStretch(2, 5)
-        lay.setColumnStretch(3, 5)
+        lay.setColumnStretch(1, 6)
+        lay.setColumnStretch(2, 4)
+        lay.setColumnStretch(3, 6)
         lay.setRowStretch(0, 1)
         lay.setRowStretch(1, 2)
         lay.setRowStretch(2, 2)
@@ -193,7 +195,7 @@ class MainWindow(QWidget):
         
         
     def browserBtnClicked(self):
-        browserSize = [595, 672]
+        browserSize = [430, 550]
             
         if not self.webBrowser or not self.webBrowser.isEnabled():
             self.program_log.setText('open browser')
@@ -279,32 +281,29 @@ class MainWindow(QWidget):
         global clocX
         global clocY
         global MOUSE_CLICKABLE
+        global MOUSE_TRACKABLE
+        OFFSET_X1 = 0
+        OFFSET_Y1 = 360
 
         #Updates the image_label with a new opencv image
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
         #print(cur_landmark)
-        if ht.cur_landmark != (None, None): 
-            #convert coordinates
-            (index_x, index_y) = (np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
-                                    np.interp(ht.cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
-            
-            
+        if ht.cur_landmark != (None, None):   
             #self.program_log.setText(str(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))
-            
-            self.program_log.setText("length: {:.3f}".format(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))
-            if (not MOUSE_TRACKABLE):
-                return
-
             length = hypot(ht.cur_landmark[1].x - ht.cur_landmark[0].x, ht.cur_landmark[1].y - ht.cur_landmark[0].y)
+            #self.program_log.setText(str(length))
             #mouse events
-            if length >= 0.1:
+            if length >= 0.2:
+                #convert coordinates
+                (index_x, index_y) = (OFFSET_X1 + np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
+                                         OFFSET_Y1 + np.interp(ht.cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
                 #smoothening
                 clocX = plocX + (index_x - plocX) / SMOOTHENING
                 clocY = plocY + (index_y - plocY) / SMOOTHENING
                 MOUSE.position = (clocX, clocY)
 
-            if(MOUSE_CLICKABLE and length >= 0.022 and length <= 0.05):
+            if(MOUSE_CLICKABLE and length >= 0.025 and length <= 0.05):
                 self.program_log.setText("click!: {:.3f}".format(length))
                 MOUSE.click(Button.left, 1)
                 MOUSE_CLICKABLE = False
@@ -329,5 +328,5 @@ class MainWindow(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
-    ex.showFullScreen()
+    ex.show()
     sys.exit(app.exec_())

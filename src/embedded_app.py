@@ -37,12 +37,12 @@ class Container(QWindow):
         if(not started):
             return None
 
-        #sleep(3)
         if(appname=='lxterminal'):
             appname = 'pi@raspberrypi: ~/Desktop'
         
         timeout = time() + 10
         while True:
+            sleep(.1)
             if time() > timeout:
                 print("ERROR EMBED APP")
                 return False
