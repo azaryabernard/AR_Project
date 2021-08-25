@@ -1,4 +1,3 @@
-import os
 import sys
 import sh
 import numpy as np
@@ -12,19 +11,22 @@ from PyQt5.QtCore import QTimer, QTime, Qt, QSize, pyqtSlot
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QPixmap, QWindow, QImage, QBrush, QPalette
 from pynput.mouse import Button, Controller
+from RPi import GPIO
 from _config import *
+import speechrecognition
 
 
 
 ######################
 MOUSE = Controller()
-MOUSE_CLICKABLE = True
-#MOUSE_TRACKABLE = False
+MOUSE_TRACKABLE = True
 APP_POS = [2,1,3]
 PCIDS = []
 plocX,plocY = 0, 0
 clocX, clocY = 0, 0
-os.chdir('/home/pi/AR_Project/src')
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(MIC_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(HT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 ######################
         
         
@@ -33,6 +35,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle('AR Prototype 0.1')
         self.resize(W_WIDTH, W_HEIGHT)
+        self.ht_thread = None
         self.initUI()
         
         
@@ -82,7 +85,7 @@ class MainWindow(QWidget):
         self.micBtn.resize(50,50)
         self.micBtn.setStyleSheet(cs.smallIcon_style)
         self.micBtn.move(30, 40)
-        #self.micBtn.clicked.connect(self.close)
+        self.micBtn.clicked.connect(self.startMIC)
         
         #SIDEBAR BUTTONS
         self.browserBtn = QPushButton(self)
@@ -138,6 +141,8 @@ class MainWindow(QWidget):
         self.border_label.setStyleSheet(cs.ht_border_style) 
         self.border_label.setVisible(False)
         self.image_label.setVisible(False)
+        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
+        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
 
 
     def embed_app1(self, appname, args):
@@ -212,36 +217,70 @@ class MainWindow(QWidget):
 
     def updateAll(self):
         global MOUSE_CLICKABLE
+        global MOUSE_TRACKABLE
         MOUSE_CLICKABLE = True
         current_time = QTime.currentTime()
         label_time = current_time.toString('hh:mm:ss')
         self.time_label.setText(label_time)
+        
+        if not GPIO.input(MIC_PIN) and (not self.ht_thread or self.ht_thread and not self.ht_thread.isRunning()) :
+            self.startMIC()
+            
+    def startMIC(self):
+        global MOUSE_TRACKABLE
+        MOUSE_TRACKABLE = False
+        self.micBtn.disconnect()
+        self.program_log.setText('Listening...')
+        self.ht_thread = speechrecognition.ListenThread()
+        self.ht_thread.command_signal.connect(self.processCommand)
+        self.ht_thread.start()
+            
+    @pyqtSlot(int)       
+    def processCommand(self, cmd):
+        self.ht_thread.stop()
+        global MOUSE_TRACKABLE
+        
+        print('processing command: {}'.format(cmd))
+        
+        if cmd == -1:
+            self.program_log.setText('nothing specified')
+        elif cmd == -2:
+            self.program_log.setText('no call command!')
+        elif cmd == 0:
+            self.program_log.setText('command called!')
+        elif cmd == 1 and not HANDTRACKED:
+            self.program_log.setText('turning on HandTracking')
+            self.handTrackingBtn.animateClick()
+        elif cmd == 2 and HANDTRACKED:
+            self.program_log.setText('turning off HandTracking')
+            self.handTrackingBtn.animateClick()
+        
+        MOUSE_TRACKABLE = True
+        self.micBtn.clicked.connect(self.startMIC)
     
     
     #FOR VIDEO
     def initVideo(self):
         global HANDTRACKED
-        #print("clicked from: {}", HANDTRACKED)
+        
         self.image_label.setVisible(True)
         self.border_label.setVisible(True)
-        frameX = S_WIDTH / 2
-        frameY = S_HEIGHT / 2
-        self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
-        self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
-        
-        if(not self.embeddedApp1 or not self.embeddedApp1.isEnabled() or not self.embeddedApp1.isVisible() ):
-            pass
-        else:
-            self.border_label.move(self.border_label.x() + 40, self.border_label.y())
-            self.image_label.move(self.image_label.x() + 40, self.image_label.y())
-        
-
-        if(HANDTRACKED):
-            self.handTrackingBtn.disconnect()
-            self.handTrackingBtn.clicked.connect(self.closeHand)
-            return
+        #print("clicked from: {}", HANDTRACKED)
+#         frameX = S_WIDTH / 2
+#         frameY = S_HEIGHT / 2
+#         self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
+#         self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
+#         
+#         if(not self.embeddedApp1 or not self.embeddedApp1.isEnabled() or not self.embeddedApp1.isVisible() ):
+#             pass
+#         else:
+#             self.border_label.move(self.border_label.x() + 40, self.border_label.y())
+#             self.image_label.move(self.image_label.x() + 40, self.image_label.y())
 
         HANDTRACKED = True
+        self.handTrackingBtn.disconnect()
+        self.handTrackingBtn.clicked.connect(self.closeHand)
+        
         # create the video capture thread,  connect its signal to the update_image, start
         self.thread = ht.VideoThread()
         self.thread.change_pixmap_signal.connect(self.update_image)
@@ -268,7 +307,12 @@ class MainWindow(QWidget):
                 PCIDS.remove(pcid)
             except:
                 print("ERROR: Cannot Kill PCID: {} in closeEvent!".format(pcid))
-                
+ 
+        try:    
+           sh.pkill('-o', 'chromium')
+        except:
+           print('no chromium')
+           
         if self.embeddedApp1:
             self.embeddedApp1.close()
         if self.embeddedApp2:
@@ -276,10 +320,6 @@ class MainWindow(QWidget):
         if HANDTRACKED:
             HANDTRACKED = False
             self.thread.stop()
-        try:    
-           sh.pkill('-o', 'chromium')
-        except:
-           print('no chromium')
         print("Closing...")
         
         
@@ -297,6 +337,9 @@ class MainWindow(QWidget):
         #Updates the image_label with a new opencv image
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
+        
+        if not MOUSE_TRACKABLE:
+            return
         #print(cur_landmark)
         if ht.cur_landmark != (None, None):   
             #self.program_log.setText(str(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))

@@ -21,6 +21,7 @@ import hmac
 import time
 import uuid
 
+print("MASUK MASUK MASUK MASUK")
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
 __license__ = "BS D"
@@ -545,6 +546,10 @@ class Recognizer(AudioSource):
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
     def adjust_for_ambient_noise(self, source, duration=1):
+        print("JAJAHHAHDHJASHDJASHDAJSHDJSHADJAHJSDHASJHDAJSHDJSA")
+        print("JAJAHHAHDHJASHDJASHDAJSHDJSHADJAHJSDHASJHDAJSHDJSA")
+        print("JAJAHHAHDHJASHDJASHDAJSHDJSHADJAHJSDHASJHDAJSHDJSA")
+        print("JAJAHHAHDHJASHDJASHDAJSHDJSHADJAHJSDHASJHDAJSHDJSA")
         """
         Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
 
