@@ -40,6 +40,14 @@ time_label_style = dedent(
             padding: 3px; 
         } """)
 
+speech_label_style = dedent(
+    """QLabel { 
+            color: beige;
+            border-width: 0px; 
+            font: 22px; 
+            padding: 3px; 
+        } """)
+
 icon_style = dedent(
     """QPushButton { 
             background-color: """+ "beige" +"""; 

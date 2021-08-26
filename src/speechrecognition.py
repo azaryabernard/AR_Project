@@ -3,12 +3,13 @@ import re
 import philips_hue as ph
 import pyaudio
 import wave
+import sh
 from PyQt5.QtCore import pyqtSignal, QThread
 
 r = sr.Recognizer()
 m = sr.Microphone()
 
-stopCommands = ["stop","stop listening"]
+stopCommands = ["nevermind", "stop","stop listening"]
 callCommand = ["star platinum", "star Platinum", "hey Google"]
 
 volume = 50
@@ -58,7 +59,7 @@ def processCommand(speech):
     for stopCmd in stopCommands:
         if stopCmd in speech:
             print("stop listening...")
-            return 0
+            return -1
     
     forCommand = False
     for cmd in callCommand:
@@ -91,6 +92,7 @@ def processCommand(speech):
     
     hand_tracking_on = re.compile(r'^(?=.*turn)(?=.*hand tracking)(?=.*on).*$', re.I)
     hand_tracking_off = re.compile(r'^(?=.*turn)(?=.*hand tracking)(?=.*off).*$', re.I)
+    shut_down = re.compile(r'^((?=.*shutdown)|(?=.*shut down))(?=.*device).*$', re.I)
 
     if(hand_tracking_on.match(speech)):
         print("turning hand tracking on")
@@ -99,6 +101,10 @@ def processCommand(speech):
     if(hand_tracking_off.match(speech)):
         print("turning hand tracking off")
         return 2
+    
+    if(shut_down.match(speech)):
+        print("shutdown device")
+        return 3
 
     if lights_on.match(speech):
         ph.turn_on_group('lights')
@@ -190,7 +196,7 @@ def edit_volume(vol):
     volume += vol
 
 class ListenThread(QThread):
-    command_signal = pyqtSignal(int)
+    command_signal = pyqtSignal(int, str)
     
     def __init__(self):
         super().__init__()
@@ -200,14 +206,15 @@ class ListenThread(QThread):
         try:
             print("A moment of silence, please...")
 #             with m as source: r.adjust_for_ambient_noise(source)
-#             print("Set minimum energy threshold to {}".format(r.energy_threshold))
+            print("Set minimum energy threshold to {}".format(r.energy_threshold))
             while self._run_flag:
+                sh.cvlc('--play-and-exit', '../sound/sr_activation.m4a')
                 print("Say something!")
                 try :
-                    with m as source: audio = r.listen(source, timeout = 5, phrase_time_limit = 7)
+                    with m as source: audio = r.listen(source, timeout = 3, phrase_time_limit = 5)
                 except Exception as e:
                     print(e)
-                    self.command_signal.emit(-1)
+                    self.command_signal.emit(-1, "")
                     break
 
                 print("Got it! Now to recognize it...")
@@ -219,16 +226,16 @@ class ListenThread(QThread):
                     print("You said {}".format(value))
                         
                     processed_command = processCommand(value)
-                    self.command_signal.emit(processed_command)
+                    self.command_signal.emit(processed_command, value)
                     break
 
                 except sr.UnknownValueError:
                     print("Oops! Didn't catch that")
-                    self.command_signal.emit(-1)
+                    self.command_signal.emit(-1, "")
                     break
                 except sr.RequestError as e:
                     print("Uh oh! Couldn't request results from Google Speech Recognition service; {0}".format(e))
-                    self.command_signal.emit(-1)
+                    self.command_signal.emit(-1, "")
                     break
             
             

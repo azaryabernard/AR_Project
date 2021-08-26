@@ -14,6 +14,7 @@ from pynput.mouse import Button, Controller
 from RPi import GPIO
 from _config import *
 import speechrecognition
+from time import sleep
 
 
 
@@ -27,6 +28,8 @@ clocX, clocY = 0, 0
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(MIC_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(HT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+old_time = QTime.currentTime()
+self_timer = False
 ######################
         
         
@@ -125,6 +128,12 @@ class MainWindow(QWidget):
         self.time_label.move( (W_WIDTH-150) / 2, 42)
         self.time_label.setStyleSheet(cs.time_label_style)
 
+        self.speech_label = QLabel('', self)
+        self.speech_label.setAlignment(Qt.AlignCenter)
+        self.speech_label.resize(400, 60)
+        self.speech_label.move( (W_WIDTH-400) / 2, W_HEIGHT / 2 + 100)
+        self.speech_label.setStyleSheet(cs.speech_label_style)
+
         self.program_log = QLabel('Log: ', self)
         self.program_log.setAlignment(Qt.AlignLeft)
         self.program_log.resize(300, 35)
@@ -218,29 +227,47 @@ class MainWindow(QWidget):
     def updateAll(self):
         global MOUSE_CLICKABLE
         global MOUSE_TRACKABLE
+        global self_timer
+        global old_time
         MOUSE_CLICKABLE = True
         current_time = QTime.currentTime()
         label_time = current_time.toString('hh:mm:ss')
         self.time_label.setText(label_time)
         
+        if self_timer and old_time.msecsTo(QTime.currentTime()) > 2500:
+            self_timer = False
+            self.speech_label.clear()
+            
         if not GPIO.input(MIC_PIN) and (not self.ht_thread or self.ht_thread and not self.ht_thread.isRunning()) :
             self.startMIC()
+            
             
     def startMIC(self):
         global MOUSE_TRACKABLE
         MOUSE_TRACKABLE = False
         self.micBtn.disconnect()
         self.program_log.setText('Listening...')
+        self.speech_label.setText('Listening...')
         self.ht_thread = speechrecognition.ListenThread()
         self.ht_thread.command_signal.connect(self.processCommand)
         self.ht_thread.start()
             
-    @pyqtSlot(int)       
-    def processCommand(self, cmd):
-        self.ht_thread.stop()
+    @pyqtSlot(int, str)       
+    def processCommand(self, cmd, speech=""):
         global MOUSE_TRACKABLE
+        global self_timer
+        global old_time
         
         print('processing command: {}'.format(cmd))
+        
+        if speech:
+            self.speech_label.setText(speech)
+        else:
+            self.speech_label.setText("Oops! Didn't catch that...")
+        
+        self_timer = True
+        old_time = QTime.currentTime()
+        
         
         if cmd == -1:
             self.program_log.setText('nothing specified')
@@ -249,14 +276,25 @@ class MainWindow(QWidget):
         elif cmd == 0:
             self.program_log.setText('command called!')
         elif cmd == 1 and not HANDTRACKED:
-            self.program_log.setText('turning on HandTracking')
             self.handTrackingBtn.animateClick()
         elif cmd == 2 and HANDTRACKED:
-            self.program_log.setText('turning off HandTracking')
             self.handTrackingBtn.animateClick()
-        
+        elif cmd == 3:
+            self.powerBtn.animateClick()
+        try:
+            if cmd >= 0:
+                sh.cvlc('--play-and-exit', '../sound/sr_processed.m4a')
+            else:
+                sh.cvlc('--play-and-exit', '../sound/sr_done.m4a')
+        except:
+            print('error playing sound')
+            
         MOUSE_TRACKABLE = True
         self.micBtn.clicked.connect(self.startMIC)
+        if HANDTRACKED:
+            self.closeHand()
+            self.initVideo()
+        self.ht_thread.stop()
     
     
     #FOR VIDEO
@@ -285,7 +323,65 @@ class MainWindow(QWidget):
         self.thread = ht.VideoThread()
         self.thread.change_pixmap_signal.connect(self.update_image)
         self.thread.start()
+        
+        
+    @pyqtSlot(np.ndarray)
+    def update_image(self, cv_img):
+        global plocX
+        global plocY
+        global clocX
+        global clocY
+        global MOUSE_CLICKABLE
+        global MOUSE_TRACKABLE
+        OFFSET_X1 = 0
+        OFFSET_Y1 = 360
+
+        #Updates the image_label with a new opencv image
+        qt_img = self.convert_cv_qt(cv_img)
+        self.image_label.setPixmap(qt_img)
+        
+        if not MOUSE_TRACKABLE:
+            return
+        #print(cur_landmark)
+        if ht.cur_landmark != (None, None):   
+            #self.program_log.setText(str(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))
+            length = hypot(ht.cur_landmark[1].x - ht.cur_landmark[0].x, ht.cur_landmark[1].y - ht.cur_landmark[0].y)
+            #self.program_log.setText(str(length))
+            #mouse events
+            #print(str("middle y: {}, pinky y: {}".format(ht.cur_landmark[1].y, ht.cur_landmark[2].y)))
+#             if length >= 0.16 and length < 0.2:
+#                 self.startMIC()
+#                 return
+            if length >= 0.2:
+                #convert coordinates
+                (index_x, index_y) = (OFFSET_X1 + np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
+                                         OFFSET_Y1 + np.interp(ht.cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
+                #smoothening
+                clocX = plocX + (index_x - plocX) / SMOOTHENING
+                clocY = plocY + (index_y - plocY) / SMOOTHENING
+                MOUSE.position = (clocX, clocY)
+
+            if(MOUSE_CLICKABLE and length >= 0.025 and length <= 0.05):
+                self.program_log.setText("click!: {:.3f}".format(length))
+                MOUSE.click(Button.left, 1)
+                MOUSE_CLICKABLE = False
+
+            else:
+                self.program_log.setText("not click: {:.3f}".format(length))
+            
+            plocX, plocY = clocX, clocY
+            ht.cur_landmark = (None, None)
+            
     
+    def convert_cv_qt(self, cv_img):
+        #Convert from an opencv image to QPixmap
+        h, w, ch = cv_img.shape
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QImage(cv_img.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(S_WIDTH / 2, S_HEIGHT /2, Qt.KeepAspectRatio)
+        return QPixmap.fromImage(p)
+    #END FOR VIDEO
+
     
     def closeHand(self):
         global HANDTRACKED
@@ -321,60 +417,6 @@ class MainWindow(QWidget):
             HANDTRACKED = False
             self.thread.stop()
         print("Closing...")
-        
-        
-    @pyqtSlot(np.ndarray)
-    def update_image(self, cv_img):
-        global plocX
-        global plocY
-        global clocX
-        global clocY
-        global MOUSE_CLICKABLE
-        global MOUSE_TRACKABLE
-        OFFSET_X1 = 0
-        OFFSET_Y1 = 360
-
-        #Updates the image_label with a new opencv image
-        qt_img = self.convert_cv_qt(cv_img)
-        self.image_label.setPixmap(qt_img)
-        
-        if not MOUSE_TRACKABLE:
-            return
-        #print(cur_landmark)
-        if ht.cur_landmark != (None, None):   
-            #self.program_log.setText(str(hypot(ht.cur_landmark[2].x - ht.cur_landmark[0].x, ht.cur_landmark[2].y - ht.cur_landmark[0].y)))
-            length = hypot(ht.cur_landmark[1].x - ht.cur_landmark[0].x, ht.cur_landmark[1].y - ht.cur_landmark[0].y)
-            #self.program_log.setText(str(length))
-            #mouse events
-            if length >= 0.2:
-                #convert coordinates
-                (index_x, index_y) = (OFFSET_X1 + np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
-                                         OFFSET_Y1 + np.interp(ht.cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
-                #smoothening
-                clocX = plocX + (index_x - plocX) / SMOOTHENING
-                clocY = plocY + (index_y - plocY) / SMOOTHENING
-                MOUSE.position = (clocX, clocY)
-
-            if(MOUSE_CLICKABLE and length >= 0.025 and length <= 0.05):
-                self.program_log.setText("click!: {:.3f}".format(length))
-                MOUSE.click(Button.left, 1)
-                MOUSE_CLICKABLE = False
-
-            else:
-                self.program_log.setText("not click: {:.3f}".format(length))
-            
-            plocX, plocY = clocX, clocY
-            ht.cur_landmark = (None, None)
-            
-    
-    def convert_cv_qt(self, cv_img):
-        #Convert from an opencv image to QPixmap
-        h, w, ch = cv_img.shape
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QImage(cv_img.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(S_WIDTH / 2, S_HEIGHT /2, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(p)
-    #END FOR VIDEO
 
 
 if __name__ == '__main__':
