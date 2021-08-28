@@ -4,7 +4,7 @@ Personal augmented reality project for my DIY AR-glasses (Raspberry Pi 4)
 1. mediapipe and opencv (only works for python3.7 with pip3 as (python3.7 -m pip install)):
 
 pip3 install -U numpy
-sudo apt install ffmpeg python3-opencv \n
+sudo apt install ffmpeg python3-opencv
 sudo apt install libxcb-shm0 libcdio-paranoia-dev libsdl2-2.0-0 libxv1  libtheora0 libva-drm2 libva-x11-2 libvdpau1 libharfbuzz0b libbluray2 libatlas-base-dev libhdf5-103 libgtk-3-0 libdc1394-22 libopenexr23
 sudo pip3 install mediapipe-rpi4
 
