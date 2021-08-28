@@ -11,6 +11,7 @@ sudo apt install libxcb-shm0 libcdio-paranoia-dev libsdl2-2.0-0 libxv1  libtheor
 
 sudo pip3 install mediapipe-rpi4
 
+
 2. PyQt5 and PyQt5.QtWebEngine:
 
 sudo apt-get install python3-pyqt5
@@ -27,6 +28,7 @@ sudo aptitude install python3-pyqt5.qtwebengine (1. option: NO (n), 2.option: YE
 
 sudo nano /etc/apt/sources.list and comment the newly added oldstable repository for safety reasons
 
+
 3. speechrecognition:
 
 pip3 install speechrecognition
@@ -37,12 +39,20 @@ sudo apt-get install python3-all-dev
 
 sudo apt-get install python3-pyaudio
   
+sudo pip3 install adafruit-python-shell
+  
+wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/i2smic.py
+  
+sudo python3 i2smic.py
+  
+
 4. vnc for screen mirroring (I can't get dual split screen with screen mirror working):
 
 sudo apt install x11vnc
 
 sudo apt-get install realvnc-vnc-viewer
   
+
 5. etc:
 
 pip3 install sh
