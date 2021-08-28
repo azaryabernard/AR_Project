@@ -45,6 +45,10 @@ wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/m
   
 sudo python3 i2smic.py
   
+sudo apt install xdotool  
+  
+sudo apt-get install flac  
+  
 
 4. vnc for screen mirroring (I can't get dual split screen with screen mirror working):
 
