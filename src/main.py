@@ -99,7 +99,7 @@ class MainWindow(QWidget):
         self.youtubeBtn = QPushButton(self)
         self.youtubeBtn.setIcon(QIcon('../image/youtubeIcon.png'))
         self.youtubeBtn.setStyleSheet(cs.icon_style)
-        self.youtubeBtn.clicked.connect(lambda state, appname='YouTube', args=["--profile-directory=Profile 1", "--app-id=agimnkijcaahngcdmfeangaknmldooml"]: self.embed_app1(appname, args))
+        self.youtubeBtn.clicked.connect(lambda state, appname='YouTube', args=["--profile-directory=Default", "--app-id=agimnkijcaahngcdmfeangaknmldooml"]: self.embed_app1(appname, args)) #--profile-directory=Default", "--app-id=agimnkijcaahngcdmfeangaknmldooml
         
         self.terminalBtn = QPushButton(self)
         self.terminalBtn.setIcon(QIcon('../image/terminalIcon.png'))

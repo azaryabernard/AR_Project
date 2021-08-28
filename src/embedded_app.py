@@ -8,7 +8,7 @@ import customStyleSheet as cs
 APPLICATIONS_DICT = {
     "lxterminal": "lxterminal",
     "New Tab - Chromium" : "/usr/lib/chromium-browser/chromium-browser",
-    "YouTube" : "/usr/bin/chromium",
+    "YouTube" : "/usr/bin/chromium-browser",
     "Mozilla Firefox" : "/usr/lib/firefox-esr/firefox-esr"
 }
 
@@ -39,7 +39,7 @@ class Container(QWindow):
 
         if(appname=='lxterminal'):
             appname = 'pi@raspberrypi: ~/Desktop'
-        
+        sleep(1)
         timeout = time() + 10
         while True:
             sleep(.1)
@@ -70,25 +70,26 @@ class EmbeddedApp(QWidget):
         except:
             print("error opening app")
             return None
-        
+        vertLayout = QVBoxLayout()
+        horLayout = QHBoxLayout()
         self.min_button = QPushButton('—', self)
         self.close_button = QPushButton(' x ', self)
         self.min_button.clicked.connect(lambda x: self.setVisible(x), False)
         self.close_button.clicked.connect(self.appclose)
         [x.setStyleSheet(cs.no_border_icon_style) for x in [self.min_button, self.close_button]]
-        horLayout = QHBoxLayout()
         horLayout.addStretch()
+        horLayout.setSpacing(0)
         horLayout.addWidget(self.min_button)
         horLayout.addWidget(self.close_button)
-        vertLayout = QVBoxLayout()
+        vertLayout.setSpacing(0)
         vertLayout.addLayout(horLayout)
         vertLayout.addWidget(self.appWindow)
-        vertLayout.setSpacing(0)
         self.setLayout(vertLayout)
         
         
     def appclose(self):
         try:
+            print("killing {}".format(self.pcid))
             sh.kill('-9', self.pcid)
         except:
             print("unable to kill from close button {}".format(self.pcid))

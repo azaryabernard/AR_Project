@@ -61,16 +61,16 @@ def processCommand(speech):
             print("stop listening...")
             return -1
     
-    forCommand = False
-    for cmd in callCommand:
-        if (cmd in speech):
-            print("call command specified")
-            forCommand = True
-            break
+#    forCommand = False
+#    for cmd in callCommand:
+#        if (cmd in speech):
+#            print("call command specified")
+#            forCommand = True
+#            break
     
-    if not forCommand:
-        print("no command")
-        return -2
+#    if not forCommand:
+#        print("no command")
+#        return -2
     
 
     lights_on = re.compile(r'^(?=.*turn)((?=.*lights)|(?=.*light))(?=.*on).*$', re.I)

@@ -18,7 +18,8 @@ def searchWinID(appname):
             break
     return True, winid
 
-
+sh.xrandr('--output','HDMI-1','--rotate', 'left')
+sh.xrandr('-x')
 os.system('lxterminal --command="python3 /home/pi/AR_Project/src/main.py"')
 
 ret, winid = searchWinID('AR Prototype')
