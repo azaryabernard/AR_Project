@@ -8,10 +8,11 @@ from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLineEdit, QPushButton, QTabWid
 class Browser(QTabWidget):
     """Tab Widget that that can have new tabs easily added to it."""
 
-    def __init__(self, size=[835,895],  default_url='https://www.google.com'):
+    def __init__(self, size=[835,895],  default_url='https://www.google.com', style=0):
         # Inits and Setup
         super().__init__()
         self.def_url = default_url
+        self.webStyle = style
         self.pageSize = size
         self.tabNumber = 0
         self.webPages = []
@@ -44,7 +45,6 @@ class Browser(QTabWidget):
         self.plus_button.clicked.connect(self.addNewTab)
         self.min_button.clicked.connect(lambda x: self.setVisible(x), False)
         self.close_button.clicked.connect(self.webclose)
-               
         #DefaultHomePage
         self.addNewTab()
     # end Constructor
@@ -67,7 +67,7 @@ class Browser(QTabWidget):
 
 
     def addNewTab(self):
-        webPage = WebPage(size=self.pageSize)
+        webPage = WebPage(size=self.pageSize, default_url= self.def_url, style=self.webStyle)
         self.webPages.append(webPage)
         self.addTab(webPage, self.def_url)        
         index = self.tabNumber
@@ -101,7 +101,7 @@ class Browser(QTabWidget):
 
 
 class WebPage(QWidget):
-    def __init__(self, size=[835,895], default_url='https://www.google.com'):
+    def __init__(self, size=[835,895], default_url='https://www.google.com', style=0):
         #init and frame setup
         super().__init__()
         self.frame = QFrame(self)
@@ -116,9 +116,9 @@ class WebPage(QWidget):
 
         #TOOLBAR
         self.horizontalLayout = QHBoxLayout()
-        self.url_line = QLineEdit(self.frame)
-        self.back_button = QPushButton('<<', self.frame)
-        self.forward_button = QPushButton('>>', self.frame)
+        self.url_line = QLineEdit()
+        self.back_button = QPushButton('<<')
+        self.forward_button = QPushButton('>>')
         [x.setStyleSheet(cs.small_icon_style) for x in [self.back_button, self.forward_button]]
         self.url_line.setStyleSheet(cs.small_line_style)
         
@@ -137,7 +137,7 @@ class WebPage(QWidget):
         self.quickAccessLayout = QHBoxLayout()
         self.quickAccessLayout.setContentsMargins(1,1,1,1)
         self.quickAccessLayout.setSpacing(5)
-        self.fav_buttons = [QPushButton(s, self) for s in ["Google", "YouTube", "GMail", "Twitter", "Instagram", "reddit"]]
+        self.fav_buttons = [QPushButton(s) for s in ["Google", "YouTube", "GMail", "Twitter", "Instagram", "reddit"]]
         [btn.clicked.connect(lambda state, x="www."+ btn.text() +".com": self.browse(fav=x)) for btn in self.fav_buttons]
         [self.quickAccessLayout.addWidget(btn) for btn in self.fav_buttons]
         [btn.setStyleSheet(cs.small_icon_style) for btn in self.fav_buttons]
@@ -146,9 +146,11 @@ class WebPage(QWidget):
         self.vertLayout = QVBoxLayout(self.frame)
         self.vertLayout.setContentsMargins(1,1,1,1)
         self.vertLayout.setSpacing(1)
-        self.vertLayout.addLayout(self.horizontalLayout)
+        if not style:
+            self.vertLayout.addLayout(self.horizontalLayout)
         self.vertLayout.addWidget(self.web)
-        self.vertLayout.addLayout(self.quickAccessLayout)
+        if not style:
+            self.vertLayout.addLayout(self.quickAccessLayout)
         self.web.setAttribute(Qt.WA_DeleteOnClose)
 
     #browse the given url both from url_line in toolbar and from QuickAccess Toolbar
@@ -164,6 +166,8 @@ class WebPage(QWidget):
                 siteOnly = self.url_line.text().split("www.")
                 if len(siteOnly) == 1:
                     parsedUrl = "https://www." + siteOnly[0]
+                    if len(self.url_line.text().split("m."))==2:
+                        parsedUrl = "https://" + self.url_line.text()
                 else:
                     parsedUrl = "https://www." + siteOnly[1]
             if parsedUrl:

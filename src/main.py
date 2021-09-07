@@ -58,7 +58,7 @@ class MainWindow(QWidget):
         lay.setRowStretch(1, 2)
         lay.setRowStretch(2, 2)
         lay.setRowStretch(3, 1)
-        lay.setContentsMargins(10, 10, 10, 50)
+        lay.setContentsMargins(15, 15, 15, 50)
         self.setLayout(lay)
         
         self.init_buttons()
@@ -79,15 +79,15 @@ class MainWindow(QWidget):
         #EXIT BUTTON
         self.powerBtn = QPushButton(self)
         self.powerBtn.setIcon(QIcon('../image/powerIcon.png'))
-        self.powerBtn.resize(50,50)
+        self.powerBtn.resize(70,70)
         self.powerBtn.setStyleSheet(cs.smallIcon_style)
-        self.powerBtn.move(W_WIDTH-80, 40)
+        self.powerBtn.move(W_WIDTH-100, 40)
         self.powerBtn.clicked.connect(self.close)
         
         #MIC BUTTON
         self.micBtn = QPushButton(self)
         self.micBtn.setIcon(QIcon('../image/microphoneIcon.png'))
-        self.micBtn.resize(50,50)
+        self.micBtn.resize(70,70)
         self.micBtn.setStyleSheet(cs.smallIcon_style)
         self.micBtn.move(30, 40)
         self.micBtn.clicked.connect(self.startMIC)
@@ -122,7 +122,7 @@ class MainWindow(QWidget):
         horLayout.addWidget(self.handTrackingBtn)
         horLayout.setSpacing(10)
         horLayout.addStretch()
-        self.layout().addLayout(horLayout, 3, 0, 1, 11)
+        self.layout().addLayout(horLayout, 3, 0, 1, 3)
         
 
 
@@ -160,10 +160,9 @@ class MainWindow(QWidget):
 
     def embed_app1(self, appname, args):
         browserSize = [450, 550]
-            
         if not self.embeddedApp1 or not self.embeddedApp1.isEnabled():
             self.program_log.setText('open browser')
-            self.embeddedApp1 = wb.Browser(size=browserSize, default_url='https://www.youtube.com')
+            self.embeddedApp1 = wb.Browser(size=browserSize, default_url='https://www.youtube.com', style=1)
             self.embeddedApp1.setEnabled(True)
             self.layout().addWidget(self.embeddedApp1, 1, 2, 2, 1)
             
@@ -218,6 +217,7 @@ class MainWindow(QWidget):
     def updateAll(self):
         global MOUSE_CLICKABLE
         global MOUSE_TRACKABLE
+        global mutex1
         global self_timer
         global old_time
         MOUSE_CLICKABLE = True
@@ -256,7 +256,6 @@ class MainWindow(QWidget):
         global MOUSE_TRACKABLE
         global self_timer
         global old_time
-        global mutex1
         
         print('processing command: {}'.format(cmd))
         

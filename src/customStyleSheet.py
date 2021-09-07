@@ -5,7 +5,7 @@ cpalette = {
     "black": ["#1D1C1A"],
     "red": ["#F9665E", "#D9404A", "#9B0700"],
     "orange": ["#FC6600","#FF964F", "#D45500"],
-    "beige": ["beige"],
+    "white": ["#F8F8FF"],
     "gray": ["gray"]
 }
 
@@ -15,11 +15,11 @@ cpalette = {
 smallIcon_style = dedent(
     """QPushButton { 
             color: """+ cpalette["gray"][0] +""";
-            background-color: """+ cpalette["beige"][0] +"""; 
+            background-color: """+ cpalette["white"][0] +"""; 
             border-style: outset; 
             border-width: 0px; 
             border-radius: 10px; 
-            border-color: beige; 
+            border-color: """+ cpalette["white"][0] +"""; 
             font: bold 21px; 
             padding: 5px;
             qproperty-iconSize: 34px;
@@ -34,7 +34,7 @@ smallIcon_style = dedent(
 
 time_label_style = dedent(
     """QLabel { 
-            color: beige;
+            color: """+ cpalette["white"][0] +""";
             border-width: 0px; 
             font: 28px; 
             padding: 3px; 
@@ -42,7 +42,7 @@ time_label_style = dedent(
 
 speech_label_style = dedent(
     """QLabel { 
-            color: beige;
+            color: """+ cpalette["white"][0] +""";
             border-width: 0px; 
             font: 22px; 
             padding: 3px; 
@@ -50,7 +50,7 @@ speech_label_style = dedent(
 
 icon_style = dedent(
     """QPushButton { 
-            background-color: """+ "beige" +"""; 
+            background-color: """+ cpalette["white"][0] +"""; 
             border-style: outset; 
             border-width: 2px; 
             border-radius: 10px;  
@@ -72,7 +72,7 @@ icon_style = dedent(
 
 small_icon_style = dedent(
     """QPushButton { 
-            background-color: white;
+            background-color: """+ cpalette["white"][0] +""";
             border-style: outset; 
             border-width: 1px; 
             border-radius: 5px;  
