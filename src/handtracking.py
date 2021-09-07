@@ -29,7 +29,7 @@ class VideoThread(QThread):
                 if not ret:
                     continue
                 
-                flipped = cv2.flip(frame, flipCode = 0)
+                flipped = cv2.flip(frame, flipCode = -1)
                 
                 results = hands.process(cv2.cvtColor(flipped, cv2.COLOR_BGR2RGB))
                    

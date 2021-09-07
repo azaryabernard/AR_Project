@@ -1,12 +1,13 @@
 import sys
 import sh
+import os
 import numpy as np
 import handtracking as ht
 import customStyleSheet as cs
 import webEngineBrowser as wb
 import embedded_app as embed
 from math import hypot
-from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QLabel, QGridLayout, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QLabel, QGridLayout, QHBoxLayout
 from PyQt5.QtCore import QTimer, QTime, Qt, QSize, pyqtSlot
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QPixmap, QWindow, QImage, QBrush, QPalette
@@ -30,6 +31,7 @@ GPIO.setup(MIC_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(HT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 old_time = QTime.currentTime()
 self_timer = False
+mutex1 = True
 ######################
         
         
@@ -43,20 +45,20 @@ class MainWindow(QWidget):
         
         
     def initUI(self):
-        oImage = QImage("../image/backgroundV1.png")
+        oImage = QImage("../image/backgroundV2.png")
         sImage = oImage.scaled(QSize(W_WIDTH, W_HEIGHT))
         palette = QPalette()
         palette.setBrush(QPalette.Window, QBrush(sImage))
         self.setPalette(palette)
-        lay = QGridLayout()
-        lay.setColumnStretch(0, 1)
-        lay.setColumnStretch(1, 6)
+        lay = QGridLayout(self)
+        lay.setColumnStretch(0, 4)
+        lay.setColumnStretch(1, 3)
         lay.setColumnStretch(2, 4)
-        lay.setColumnStretch(3, 6)
         lay.setRowStretch(0, 1)
         lay.setRowStretch(1, 2)
         lay.setRowStretch(2, 2)
         lay.setRowStretch(3, 1)
+        lay.setContentsMargins(10, 10, 10, 50)
         self.setLayout(lay)
         
         self.init_buttons()
@@ -111,14 +113,17 @@ class MainWindow(QWidget):
         self.handTrackingBtn.setStyleSheet(cs.icon_style)
         self.handTrackingBtn.clicked.connect(self.initVideo)
         
-        vertLayout = QVBoxLayout()
-        vertLayout.addWidget(self.browserBtn)
-        vertLayout.addWidget(self.youtubeBtn)
-        vertLayout.addWidget(self.terminalBtn)
-        vertLayout.addWidget(self.handTrackingBtn)
-        vertLayout.setSpacing(10)
-        vertLayout.addStretch()
-        self.layout().addLayout(vertLayout, 1, 0, 2, 1)
+        
+        horLayout = QHBoxLayout()
+        horLayout.addStretch()
+        horLayout.addWidget(self.browserBtn)
+        horLayout.addWidget(self.youtubeBtn)
+        horLayout.addWidget(self.terminalBtn)
+        horLayout.addWidget(self.handTrackingBtn)
+        horLayout.setSpacing(10)
+        horLayout.addStretch()
+        self.layout().addLayout(horLayout, 3, 0, 1, 11)
+        
 
 
     def init_labels(self):
@@ -153,32 +158,22 @@ class MainWindow(QWidget):
         self.image_label.move((W_WIDTH-frameX)/2, (W_HEIGHT-frameY)/2 - 200)
         self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
 
-
     def embed_app1(self, appname, args):
+        browserSize = [450, 550]
+            
         if not self.embeddedApp1 or not self.embeddedApp1.isEnabled():
-            self.embeddedApp1 = embed.EmbeddedApp(appname, args)
-            if not self.embeddedApp1:
-                self.program_log.setText("App not opened!")
-                return
+            self.program_log.setText('open browser')
+            self.embeddedApp1 = wb.Browser(size=browserSize, default_url='https://www.youtube.com')
+            self.embeddedApp1.setEnabled(True)
+            self.layout().addWidget(self.embeddedApp1, 1, 2, 2, 1)
             
-            global PCIDS
-            PCIDS.append(self.embeddedApp1.pcid)
-            
-            self.program_log.setText("App opened")
-            if appname == "YouTube":
-                self.layout().addWidget(self.embeddedApp1, 1, 1, 2, 1)
-            elif appname == "lxterminal":
-                self.layout().addWidget(self.embeddedApp1, 2, 2, 1, 1)
-        
         elif not self.embeddedApp1.isVisible() and self.embeddedApp1.isEnabled():
-            self.program_log.setText("maximized embedApp")
+            self.program_log.setText("maximized browser")
             self.embeddedApp1.setVisible(True)
+
         else:
             self.program_log.setText('passed')
-        if HANDTRACKED:
-            self.closeHand()
-            self.initVideo()
-        
+      
     def embed_app2(self, appname, args):
         if not self.embeddedApp2 or not self.embeddedApp2.isEnabled():
             self.embeddedApp2 = embed.EmbeddedApp(appname, args)
@@ -190,11 +185,8 @@ class MainWindow(QWidget):
             PCIDS.append(self.embeddedApp2.pcid)
             
             self.program_log.setText("App opened")
-            if appname == "YouTube":
-                self.layout().addWidget(self.embeddedApp2, 1, 1, 2, 1)
-            elif appname == "lxterminal":
-                self.layout().addWidget(self.embeddedApp2, 2, 2, 1, 1)
-        
+            self.layout().addWidget(self.embeddedApp2, 2, 1, 1, 1)
+                
         elif not self.embeddedApp2.isVisible() and self.embeddedApp2.isEnabled():
             self.program_log.setText("maximized embedApp")
             self.embeddedApp2.setVisible(True)
@@ -207,13 +199,13 @@ class MainWindow(QWidget):
         
         
     def browserBtnClicked(self):
-        browserSize = [430, 550]
+        browserSize = [450, 550]
             
         if not self.webBrowser or not self.webBrowser.isEnabled():
             self.program_log.setText('open browser')
             self.webBrowser = wb.Browser(size=browserSize)
             self.webBrowser.setEnabled(True)
-            self.layout().addWidget(self.webBrowser, 1, 3, 2, 1)
+            self.layout().addWidget(self.webBrowser, 1, 0, 2, 1)
             
         elif not self.webBrowser.isVisible() and self.webBrowser.isEnabled():
             self.program_log.setText("maximized browser")
@@ -221,7 +213,6 @@ class MainWindow(QWidget):
 
         else:
             self.program_log.setText('passed')
-            pass
         
 
     def updateAll(self):
@@ -237,6 +228,9 @@ class MainWindow(QWidget):
         if self_timer and old_time.msecsTo(QTime.currentTime()) > 2500:
             self_timer = False
             self.speech_label.clear()
+            if not mutex1 and not self.embeddedApp2.isVisible():
+                self.embeddedApp2.setVisible(True)
+                mutex1 = True
             
         if not GPIO.input(MIC_PIN) and (not self.ht_thread or self.ht_thread and not self.ht_thread.isRunning()) :
             self.startMIC()
@@ -244,7 +238,12 @@ class MainWindow(QWidget):
             
     def startMIC(self):
         global MOUSE_TRACKABLE
+        global mutex1
         MOUSE_TRACKABLE = False
+        if self.embeddedApp2 and mutex1 and self.embeddedApp2.isVisible():
+            self.embeddedApp2.setVisible(False)
+            mutex1 = False
+        
         self.micBtn.disconnect()
         self.program_log.setText('Listening...')
         self.speech_label.setText('Listening...')
@@ -257,6 +256,7 @@ class MainWindow(QWidget):
         global MOUSE_TRACKABLE
         global self_timer
         global old_time
+        global mutex1
         
         print('processing command: {}'.format(cmd))
         
@@ -354,7 +354,7 @@ class MainWindow(QWidget):
 #                 return
             if length >= 0.2:
                 #convert coordinates
-                (index_x, index_y) = (OFFSET_X1 + np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
+                (index_x, index_y) = (OFFSET_X1+1280 + np.interp(ht.cur_landmark[0].x * S_WIDTH, (FRAMER_X, S_WIDTH-FRAMER_X), (0, W_WIDTH)), 
                                          OFFSET_Y1 + np.interp(ht.cur_landmark[0].y * S_HEIGHT, (FRAMER_Y, S_HEIGHT-FRAMER_Y), (0, W_HEIGHT)))
                 #smoothening
                 clocX = plocX + (index_x - plocX) / SMOOTHENING
@@ -416,6 +416,7 @@ class MainWindow(QWidget):
         if HANDTRACKED:
             HANDTRACKED = False
             self.thread.stop()
+        os.system('DISPLAY=:0 xrandr -x')
         print("Closing...")
 
 
@@ -424,3 +425,29 @@ if __name__ == '__main__':
     ex = MainWindow()
     ex.show()
     sys.exit(app.exec_())
+
+
+
+"""
+    def embed_app1(self, appname, args):
+        if not self.embeddedApp1 or not self.embeddedApp1.isEnabled():
+            self.embeddedApp1 = embed.EmbeddedApp(appname, args)
+            if not self.embeddedApp1:
+                self.program_log.setText("App not opened!")
+                return
+            
+            global PCIDS
+            PCIDS.append(self.embeddedApp1.pcid)
+            
+            self.program_log.setText("App opened")
+            self.layout().addWidget(self.embeddedApp1, 1, 2, 2, 1)
+        
+        elif not self.embeddedApp1.isVisible() and self.embeddedApp1.isEnabled():
+            self.program_log.setText("maximized embedApp")
+            self.embeddedApp1.setVisible(True)
+        else:
+            self.program_log.setText('passed')
+        if HANDTRACKED:
+            self.closeHand()
+            self.initVideo()
+"""  

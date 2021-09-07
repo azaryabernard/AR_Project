@@ -8,9 +8,10 @@ from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLineEdit, QPushButton, QTabWid
 class Browser(QTabWidget):
     """Tab Widget that that can have new tabs easily added to it."""
 
-    def __init__(self, size=[835,895]):
+    def __init__(self, size=[835,895],  default_url='https://www.google.com'):
         # Inits and Setup
         super().__init__()
+        self.def_url = default_url
         self.pageSize = size
         self.tabNumber = 0
         self.webPages = []
@@ -68,7 +69,7 @@ class Browser(QTabWidget):
     def addNewTab(self):
         webPage = WebPage(size=self.pageSize)
         self.webPages.append(webPage)
-        self.addTab(webPage, "https://www.google.com/")        
+        self.addTab(webPage, self.def_url)        
         index = self.tabNumber
         self.setTabText(index, "google")
         self.setCurrentIndex(self.tabNumber)
