@@ -16,6 +16,7 @@ from RPi import GPIO
 from _config import *
 import speechrecognition
 from time import sleep
+import weather
 
 
 
@@ -52,15 +53,15 @@ class MainWindow(QWidget):
         self.setPalette(palette)
         lay = QGridLayout(self)
         lay.setColumnStretch(0, 4)
-        lay.setColumnStretch(1, 3)
+        lay.setColumnStretch(1, 2)
         lay.setColumnStretch(2, 4)
         lay.setRowStretch(0, 1)
         lay.setRowStretch(1, 2)
         lay.setRowStretch(2, 2)
         lay.setRowStretch(3, 1)
-        lay.setContentsMargins(15, 15, 15, 50)
+        lay.setContentsMargins(70, 15, 25, 50)
         self.setLayout(lay)
-        
+        self.init_widgets()
         self.init_buttons()
         self.init_labels()
         self.webBrowser = None
@@ -72,6 +73,9 @@ class MainWindow(QWidget):
         timer.timeout.connect(self.updateAll)
         timer.start(1000)
     
+    def init_widgets(self):
+        self.weather_widget = weather.WeatherWidget()
+        self.layout().addWidget(self.weather_widget, 1,0,2,1)
 
     def init_buttons(self):
         self.dummyBtn = QPushButton(self)
@@ -112,7 +116,6 @@ class MainWindow(QWidget):
         self.handTrackingBtn.setIcon(QIcon('../image/handIcon.png'))
         self.handTrackingBtn.setStyleSheet(cs.icon_style)
         self.handTrackingBtn.clicked.connect(self.initVideo)
-        
         
         horLayout = QHBoxLayout()
         horLayout.addStretch()
@@ -159,7 +162,7 @@ class MainWindow(QWidget):
         self.border_label.move((W_WIDTH-frameX)/2 + FRAMER_X/2, (W_HEIGHT-frameY)/2 + FRAMER_Y/2 - 200)
 
     def embed_app1(self, appname, args):
-        browserSize = [450, 550]
+        browserSize = [480, 550]
         if not self.embeddedApp1 or not self.embeddedApp1.isEnabled():
             self.program_log.setText('open browser')
             self.embeddedApp1 = wb.Browser(size=browserSize, default_url='https://www.youtube.com', style=1)
@@ -198,7 +201,7 @@ class MainWindow(QWidget):
         
         
     def browserBtnClicked(self):
-        browserSize = [450, 550]
+        browserSize = [480, 550]
             
         if not self.webBrowser or not self.webBrowser.isEnabled():
             self.program_log.setText('open browser')
