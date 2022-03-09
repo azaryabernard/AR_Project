@@ -1,6 +1,8 @@
 # AR_Project
 Personal augmented reality project for my DIY AR-glasses (Raspberry Pi 4)
 
+![page0](https://user-images.githubusercontent.com/55510214/157495776-77e20b5e-e780-4b41-a8dd-762b0279ef4f.jpg)
+
 1. mediapipe and opencv (only works for python3.7 with pip3 as (python3.7 -m pip install)):
 
 pip3 install -U numpy
